@@ -1,0 +1,72 @@
+---
+title: "What is GIS and spatial analysis"
+---
+
+GeoAI is built on top of geographic information science, so this chapter sets a shared baseline for readers who arrive from different backgrounds. If you already work comfortably in a GIS, skim the first half and spend your time on the last two sections, which connect GIS ideas to modeling.
+
+::: {.callout-note title="Learning objectives"}
+By the end of this chapter you should be able to
+
+- describe what a geographic information system does and what makes geographic data different from other kinds of data
+- distinguish vector and raster data and explain why the choice matters for modeling
+- explain why coordinate systems, scale, and resolution change what an analysis can say
+- state the first law of geography and say why it matters for machine learning
+:::
+
+## What a GIS does
+
+A geographic information system (GIS) is a set of tools for capturing, storing, analyzing, managing, and presenting data that are tied to locations on Earth [@longley2015]. The software matters less than the idea underneath it, which is that location is a first-class property of the data. A row in a table of schools is only a row. A row that carries a coordinate can be mapped, joined to the census tract it falls in, measured against the nearest highway, and compared with its neighbors.
+
+The scientific questions behind the software make up geographic information science, and they include how to represent the world, how to reason about uncertainty, and how to analyze data that are tied to place [@goodchild1992]. Those questions do not go away when the analysis becomes automated. They become more important, because a model will accept whatever representation you hand it and will not warn you if that representation hides something that matters.
+
+## Representing the world
+
+Every geographic dataset is a simplified model of reality, and the two most common models are vector and raster.
+
+| Model  | Basic unit                                  | Typically used for                 | Example                                         |
+|--------|---------------------------------------------|------------------------------------|-------------------------------------------------|
+| Vector | Points, lines, and polygons with attributes | Discrete objects with boundaries   | School locations, road networks, census tracts  |
+| Raster | A regular grid of cells, each with a value  | Continuous surfaces and imagery    | Elevation, land surface temperature, satellite imagery |
+
+: Two common geographic data models {#tbl-data-models}
+
+The choice carries consequences. A polygon of census tracts hides everything that varies inside each tract, while a raster of land surface temperature imposes a fixed grid on a world that has no grid. Geographers often describe this as the difference between thinking in terms of discrete objects and thinking in terms of continuous fields, and most real projects mix the two. A poverty estimation project, for example, may pair a raster of satellite imagery with vector survey locations and polygon administrative boundaries.
+
+Alongside the geometry, each feature or cell carries attributes, which are the values you measure, record, or want to predict. In machine learning terms, attributes become the features and the labels in your dataset. Getting from geometry plus attributes to a clean table or tensor is a large part of GeoAI work, and the data engineering chapters return to it in detail.
+
+### Coordinate systems, scale, and resolution
+
+Locations only mean something relative to a coordinate reference system (CRS). A geographic CRS describes positions on the curved Earth with latitude and longitude, while a projected CRS flattens the Earth onto a plane so that distances and areas can be computed in familiar units. Every projection distorts something, whether area, shape, distance, or direction, so the right projection depends on the question. The familiar Web Mercator map, for example, exaggerates the size of places far from the equator, which would badly distort any analysis that compares areas.
+
+Scale and resolution matter just as much. Resolution is the size of the smallest unit you can distinguish, such as the ground size of an image pixel, and scale is the extent over which you are working. A pattern that appears at the neighborhood scale can vanish at the national scale, and a model trained on data at one resolution may behave unpredictably on data at another. Keep both in mind as you read, because they return as a central theme in the chapter on spatial thinking.
+
+## What spatial analysis adds
+
+Spatial analysis is the set of methods whose results change when the locations of the objects change. Common operations include overlay, which combines layers that cover the same area, buffering, which draws zones around features, spatial joins, which attach attributes based on location, distance and network analysis, and interpolation, which estimates values at places where nothing was measured. Spatial statistics adds tools for describing and testing patterns in space, such as clustering and hot spots.
+
+Nearly all of these methods rest on one observation, usually called the first law of geography, which holds that near things tend to be more related than distant things [@tobler1970]. This sounds like common sense, and it has a sharp consequence for modeling. If nearby observations resemble each other, then they are not independent samples, and many standard statistical and machine learning assumptions quietly break. Two properties follow from this idea and will occupy much of this book. The first is spatial autocorrelation, the tendency of nearby values to be similar. The second is spatial heterogeneity, the tendency of relationships to differ from place to place. The chapter on spatial thinking develops both in depth.
+
+## From rules to learning
+
+A GIS analyst typically works by writing explicit rules. To map flooded areas, the analyst might declare that any cell below a certain elevation and within a certain distance of a river counts as at risk. The rule is transparent and easy to defend, but someone has to know the right thresholds in advance, and the rule cannot adapt to places where the relationship between elevation, distance, and flooding is different.
+
+Machine learning turns this around. Instead of specifying the rule, you provide examples of places and their outcomes, and the model learns a rule from them. That shift is powerful, and it is also risky, because the learned rule is only as good as the examples and the way you represent them. The next chapter introduces the learning problem directly. Everything you have just read about representation, coordinate systems, scale, and spatial dependence will decide whether a learned rule can be trusted.
+
+::: {.callout-tip title="Try it"}
+Pick a place you know well, such as your campus or neighborhood. Sketch how you would represent it as vector data, and then as a raster. For each version, write down two things that the representation captures well and two things that it loses. Compare your sketch with a classmate's and look for places where you made different choices. Which choices would change a model trained on the data?
+:::
+
+::: {.callout-note title="Frontier"}
+Choices about data models shape what an algorithm can learn, and researchers continue to debate how best to represent geographic phenomena for learning systems. Open questions include how to represent fields and objects in the same model, how to carry uncertainty about locations and boundaries through an analysis, and how much of a place's meaning can be captured by coordinates alone. As you read papers in this area, notice what data model each one assumes and what that assumption leaves out.
+:::
+
+::: {.callout-warning title="What could go wrong"}
+Maps look authoritative, which makes representation errors easy to miss. A projection that distorts area can mislead any comparison between regions. Aggregating data into administrative units can hide inequality within them. Stripping a dataset down to coordinates can also expose people, since precise locations may reveal where individuals live. Treat every data model as an argument about the world and ask who and what it leaves out.
+:::
+
+## Summary
+
+- A GIS ties data to locations, and geographic information science studies how to represent and reason about that data.
+- Vector and raster models make different trade-offs, and the coordinate system, scale, and resolution all shape what an analysis can claim.
+- Spatial analysis rests on the first law of geography, which implies that nearby observations are not independent.
+- Machine learning replaces hand-written rules with rules learned from examples, which raises the stakes for how data are represented.

@@ -1,0 +1,80 @@
+---
+title: "What are AI and ML"
+---
+
+Machine learning is the set of methods for building models from data instead of from hand-written rules, and nearly every GeoAI method is a machine learning method. This chapter introduces the vocabulary and the basic learning problem so that the rest of the book can use them without pausing to explain.
+
+::: {.callout-note title="Learning objectives"}
+By the end of this chapter you should be able to
+
+- distinguish artificial intelligence, machine learning, and deep learning
+- describe the supervised learning problem in terms of features, labels, a model, and a loss
+- explain why models are evaluated on data they were not trained on
+- name the independence assumption behind standard evaluation and explain why geographic data tend to violate it
+:::
+
+## AI, machine learning, and deep learning
+
+Artificial intelligence (AI) is the broad goal of building systems that perform tasks that would normally call for human intelligence. The term dates to a workshop held at Dartmouth College in 1956, and early work leaned heavily on hand-written symbolic rules. Machine learning (ML) takes a different route. A program is said to learn when its performance on a task, judged by some measure, improves with experience [@mitchell1997]. Deep learning is the subset of machine learning that uses neural networks with many layers to learn useful representations directly from raw data such as images [@goodfellow2016].
+
+```{mermaid}
+%%| label: fig-ai-ml-dl
+%%| fig-cap: "Deep learning is a subset of machine learning, which is a subset of artificial intelligence."
+flowchart TB
+  subgraph AI["Artificial intelligence"]
+    subgraph ML["Machine learning"]
+      DL["Deep learning"]
+    end
+  end
+```
+
+Keep the nesting in @fig-ai-ml-dl in mind, because the terms are often used as if they meant the same thing. Many useful models, including the decision trees and random forests that appear early in this book, are machine learning without being deep learning. A simpler model that you can inspect is often the better choice, and it is always the right baseline.
+
+## The learning problem
+
+Most of this book concerns supervised learning, in which you learn from examples that come with known answers. Each example has a set of inputs, called features, and an outcome, called the label. Suppose you want to predict the median home value of a census tract. The features might be median income, average house age, and distance to the coast, and the label is the home value you want to predict.
+
+A model is a function with adjustable parameters that maps features to a prediction.
+
+$$
+\hat{y} = f(\mathbf{x}; \theta)
+$$
+
+Here $\mathbf{x}$ holds the features, $\theta$ holds the parameters, and $\hat{y}$ is the prediction. A loss function $L$ measures how far a prediction is from the true label, and training means finding the parameters that make the average loss small across the training examples.
+
+$$
+\theta^{*} = \arg\min_{\theta} \; \frac{1}{n} \sum_{i=1}^{n} L\big(y_i, f(\mathbf{x}_i; \theta)\big)
+$$
+
+When the label is a number, such as a home value, the task is regression. When the label is a category, such as a land cover class, the task is classification. Learning without labels is called unsupervised learning, and it is used to find structure in data, for example by grouping similar places together. A later part of the book returns to it as a way of exploring learned representations.
+
+## Generalization
+
+A model that has memorized its training examples will score perfectly on them and poorly on anything new. This failure is called overfitting, and its opposite, underfitting, happens when a model is too simple to capture the pattern at all. What you actually care about is generalization, which is performance on new examples drawn from the situation where the model will be used [@james2023].
+
+To estimate generalization you hold data back. Practitioners usually divide a dataset into a training set used to fit the model, a validation set used to tune choices such as model type and settings, and a test set that is touched only once, at the end, to report performance. The test set only means something if it stands in honestly for the future use of the model.
+
+Standard practice also makes a quiet assumption, which is that the examples are independent and identically distributed, often shortened to i.i.d. Independence means that knowing one example tells you nothing extra about another. This is the assumption that geographic data tend to violate. Nearby places resemble each other, so a random split can place a training tract right next to the test tract it nearly duplicates, and the model appears to generalize when it has simply seen the neighborhood before. The next chapter, and much of the rest of the book, builds on this single problem.
+
+## Families of models
+
+Later chapters introduce the main families of models in turn. Linear models, decision trees, and random forests work well on tabular data and are the first to try. Neural networks, and convolutional networks in particular, learn directly from imagery. Transformers and the foundation models built on them learn general-purpose representations from very large collections of data and can be adapted to many tasks. No family is best everywhere, and part of the craft of GeoAI is choosing the simplest model that answers the question.
+
+::: {.callout-tip title="Try it"}
+Imagine 20 pixels, each described by a red value and a near-infrared value and labeled as vegetation or not vegetation. On paper, plot the pixels and draw a rule that separates the two groups, then write the rule down in words. Next, think about how you chose it. Which pixels were hardest to classify, and how confident are you that your rule would work on a different image taken in a different season? You will compare your hand-drawn rule with one learned by a decision tree in a later chapter.
+:::
+
+::: {.callout-note title="Frontier"}
+Much of the history of machine learning is a shift from hand-engineered features toward learned representations, and the most recent shift is toward pretrained models that are adapted to new tasks with little additional training. Whether and how such models should be adapted to account for geography is an active research question, and the foundation models part of this book takes it up. A useful habit when reading new papers is to ask what each method assumes about the independence of its examples.
+:::
+
+::: {.callout-warning title="What could go wrong"}
+Models inherit the biases of the data and labels they learn from, and a single accuracy number can hide large differences in how well a model works for different places and groups. Labels are often noisy or produced by a process that reflects existing inequities, such as which neighborhoods get surveyed. A test set that does not resemble the places where a model will actually be used will produce a reassuring number that means very little.
+:::
+
+## Summary
+
+- Deep learning is a subset of machine learning, which is a subset of artificial intelligence.
+- Supervised learning fits a model that maps features to labels by minimizing a loss on training data.
+- Generalization is estimated on held-out data, and the estimate is only trustworthy if the held-out data resemble the situation of use.
+- Standard evaluation assumes independent examples, and geographic data tend to break that assumption.

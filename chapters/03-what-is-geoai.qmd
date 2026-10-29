@@ -1,0 +1,75 @@
+---
+title: "What is GeoAI"
+---
+
+GeoAI is the use of artificial intelligence to solve geospatial problems. That sentence can sound like a small variation on applying AI to geospatial data, yet the difference shapes how you frame a question, build a dataset, choose a model, and decide whether the result can be trusted. This chapter makes that argument and gives you a way to apply it to any project you meet.
+
+::: {.callout-note title="Learning objectives"}
+By the end of this chapter you should be able to
+
+- contrast a data-centered, a problem-centered, and a method-centered definition of GeoAI
+- explain why applying AI to geospatial data does not by itself make a project GeoAI
+- use a short set of questions to judge whether a project treats space seriously
+- place GeoAI in relation to GIS, spatial statistics, and mainstream AI
+:::
+
+## Three ways to define GeoAI
+
+People use the word GeoAI in at least three ways, and keeping them apart clears up many arguments.
+
+The first is the data view, in which GeoAI is AI applied to geospatial data such as satellite imagery, GPS traces, or maps. This definition is easy to apply, and it is too broad. A convolutional network that classifies photographs does not become GeoAI because the photographs were taken from orbit. If the method treats every image as an isolated picture and the evaluation ignores where the images came from, nothing about the approach is geographic.
+
+The second is the problem view, in which GeoAI is the use of AI to solve problems about places, patterns, and processes in space. What makes a project geospatial is the question, the labels, or the decision the result supports. This is the view that guides this book.
+
+The third is the method view, in which GeoAI refers to spatially explicit AI, meaning methods that build spatial structure into the model itself [@janowicz2020]. Examples include models that learn how relationships change across space or that encode location directly. The method view describes where the field wants to go, and the problem view describes what it is for.
+
+These views nest instead of competing. A good GeoAI project starts from a geospatial problem, uses geospatial data, and increasingly uses methods that take space seriously.
+
+## Why the distinction matters
+
+Consider four projects, each of which uses AI and geospatial data.
+
+| Project | Geospatial data | Geospatial problem | What space changes about the method |
+|---------|-----------------|--------------------|-------------------------------------|
+| Classify everyday photographs with a CNN | No | No | Nothing |
+| Train a CNN on satellite tiles and score it with a random split of tiles | Yes | Partly | Little, since neighboring tiles leak across the split |
+| Estimate poverty from imagery and test by holding out entire regions | Yes | Yes | The split, and ideally the model, respect spatial structure |
+| Predict housing prices from tract features and split rows at random | Yes | Yes | Little, and the reported accuracy is likely inflated |
+
+: Four projects and what space contributes to each {#tbl-geoai-examples}
+
+The last two rows of @tbl-geoai-examples have the same data type and the same kind of question, yet they differ in whether the project accounts for space. Spatial autocorrelation can make a randomly split test set look nearly identical to the training set, so a model can score well and still fail in a new region. A project that ignores this can pass every standard check and still mislead.
+
+## A short test
+
+When you read a paper or plan your own project, four questions help you judge how seriously it treats space.
+
+1. Does the question concern places, such as where something is, how it varies across space, or what is happening in a particular area?
+2. Do the labels or outcomes depend on location, so that nearby observations are related?
+3. Would a random train and test split be valid, or would it leak information between neighbors?
+4. Would the answer change if the scale, the resolution, or the boundaries of the study area changed?
+
+If the answers suggest that space matters and the project does not address it, the project is applying AI to geospatial data without doing GeoAI. If you can answer these questions clearly, you have already done much of the hardest conceptual work.
+
+## Where GeoAI sits
+
+GeoAI draws on three traditions. Geographic information science supplies the data models, the coordinate systems, and the long habit of asking how location shapes a result. Spatial statistics supplies tools for measuring and modeling dependence and variation across space. Artificial intelligence supplies flexible learning methods that can find patterns in large and complex data. None of these ideas is new. Researchers were already exploring neural networks and related methods for geographic problems in the 1990s [@openshaw1997], and the next chapter traces that history. What is new is the scale of the data, the power of the models, and the ease with which anyone can run them, which is exactly why the habits in this chapter matter.
+
+::: {.callout-tip title="Try it"}
+Choose five recent papers or projects that use machine learning with geographic data, for example from news coverage, a journal, or a conference. For each one, apply the four questions above and decide whether you would call it GeoAI. Bring your list to class and defend one case where you and a classmate disagreed. What would the authors have needed to do differently to change your mind?
+:::
+
+::: {.callout-note title="Frontier"}
+The boundaries of the field are still contested. Some researchers argue that GeoAI should be defined by spatially explicit methods, and others argue that a problem-centered definition is enough. A related open question is whether large pretrained models that take location as just another input can capture spatial structure well enough, or whether explicit spatial mechanisms will remain necessary. Pay attention to how each paper you read answers these questions, whether it says so openly or not.
+:::
+
+::: {.callout-warning title="What could go wrong"}
+Calling a project GeoAI because of its data type invites overconfidence, since the label suggests a rigor that the method may not have. Ignoring space also tends to produce inflated accuracy, and inflated accuracy tends to lead to models that are deployed where they have not been shown to work. The people most affected are often those in regions that were poorly represented in the training data.
+:::
+
+## Summary
+
+- GeoAI can be defined by its data, its problems, or its methods, and this book emphasizes the problem view while working toward the method view.
+- Applying AI to geospatial data is not enough, because a project can ignore spatial structure and still look successful.
+- Four questions about place, location-dependent labels, split validity, and scale help judge how seriously a project treats space.
+- GeoAI combines geographic information science, spatial statistics, and artificial intelligence, and its core ideas have a long history.
