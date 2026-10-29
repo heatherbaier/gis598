@@ -1,0 +1,33 @@
+project:
+  type: book
+  output-dir: _book
+
+book:
+  title: "Geospatial Artificial Intelligence with Python"
+  author: "Heather Baier"
+  date: today
+  search: true
+  sidebar:
+    style: docked
+  chapters:
+    - index.qmd
+    - part: "Foundations"
+      chapters:
+        - chapters/01-gis-and-spatial-analysis.qmd
+        - chapters/02-ai-and-machine-learning.qmd
+        - chapters/03-what-is-geoai.qmd
+    - references.qmd
+
+bibliography: references.bib
+
+format:
+  html:
+    theme:
+      light: cosmo
+      dark: darkly
+    toc: true
+    toc-depth: 3
+    code-copy: true
+
+execute:
+  freeze: auto

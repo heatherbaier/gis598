@@ -1,0 +1,295 @@
+---
+title: "Spatial thinking in GeoAI"
+execute:
+  echo: true
+  warning: false
+---
+
+A machine learning model does not know that its data come from places. It sees rows, pixels, and numbers, and it will find whatever patterns make its loss go down, whether those patterns reflect a real geographic process or an accident of where the data happened to be collected. Spatial thinking is the work you do so that the model's patterns and the world's patterns line up. This chapter is built around discussion more than procedure. Its goal is to give you a set of questions you will carry into every project in this book and every GeoAI paper you read.
+
+::: {.callout-note title="Learning objectives"}
+By the end of this chapter you should be able to
+
+- describe what spatial thinking means and why it is a distinct skill from programming or statistics
+- explain how spatial representation, dependence, heterogeneity, scale, uncertainty, and coverage each change how a model learns and how it should be evaluated
+- predict what goes wrong when each of these is ignored, and name a way to detect it
+- carry out a spatial audit of a GeoAI project, including your own
+- take a reasoned position on open debates such as how spatial models should be validated
+:::
+
+## A thought experiment
+
+Imagine you have trained a model that predicts median home values for every census tract in California, and it reports an impressive accuracy on a test set. Now take the tracts and shuffle their locations, so that each tract keeps its own attributes but is moved to a random place on the map, and train the model again.
+
+If the accuracy does not change, the model has ignored geography entirely. It learned a relationship between attributes and values that would hold just as well on a map scrambled beyond recognition. If the accuracy collapses, the model was relying on geography in some way. Neither result is automatically good. A model that ignores space may be missing the very processes that make housing markets geographic, and a model that leans on space may simply have memorized which neighborhoods are expensive without learning anything that would help in a city it has never seen.
+
+This test is a version of what Janowicz and colleagues call the invariance test for whether a model is spatially explicit, which asks whether the results change when the locations of the phenomena change [@janowicz2020]. The rest of this chapter is about learning to tell which kind of reliance on space you are looking at, and whether it is the kind you want.
+
+::: {.callout-tip title="Discuss"}
+Before reading further, write down your prediction. For each of the four running examples in this book (housing prices, urban heat islands, poverty from imagery, and land cover), would shuffling locations hurt the model a lot, a little, or not at all? What does your answer reveal about what you think the model is learning?
+:::
+
+## What spatial thinking is
+
+A widely used definition describes spatial thinking as a combination of three things, which are an understanding of concepts of space such as distance, direction, and neighborhood, the use of tools of representation such as maps and graphs, and processes of reasoning that use those concepts and tools to solve problems [@nrc2006]. Spatial thinking is not a property of software. A person can use GIS for years without thinking spatially, and a person with a pencil and a paper map can think spatially very well.
+
+Goodchild and Janelle argue that this is not enough on its own, and that students also need critical spatial thinking, meaning the habit of questioning where data came from, how reliable they are, and what a given representation of space includes and leaves out [@goodchild2010]. Kuhn makes a related case for a small set of core concepts of spatial information, such as location, field, object, and network, that let people across disciplines reason about spatial data in a shared way [@kuhn2012].
+
+GeoAI raises the stakes for both. Kedron and colleagues argue that students learning GeoAI need to build mental structures, which educational psychologists call schemas, that integrate geographic concepts with AI concepts, because neither set alone is enough to solve a geographic problem with a learning system [@kedron2026]. Their example is spatial cross-validation. To understand it, a student has to connect spatial autocorrelation, spatial sampling, and scale on the geographic side with train and test splits, data leakage, and evaluation metrics on the AI side. A student who knows only the AI half will run a random split and trust the result. A student who knows only the geographic half will not see why a random split is a problem for a learning algorithm.
+
+The two properties that make spatial data special have been recognized for a long time. Anselin identified spatial dependence and spatial heterogeneity as the two features that set spatial data apart from the independent, identically distributed samples assumed by standard statistics [@anselin1989]. This chapter starts from those two properties and adds the others that matter most when a learning algorithm is involved. @tbl-habits summarizes them as habits of mind, each paired with the machine learning ideas it changes.
+
+| Habit of mind | The question it asks | The machine learning ideas it reshapes |
+|----|----|----|
+| Representation | What counts as a location, and what is around it? | Features, inputs, the unit of prediction |
+| Dependence | How are my observations related to their neighbors? | Train and test splits, leakage, sample size |
+| Heterogeneity | Does the relationship hold everywhere? | Global versus local models, transfer |
+| Scale | At what scale does the process operate, and at what scale did I measure it? | Tile size, receptive field, aggregation |
+| Uncertainty | How sure am I about where and what each observation is? | Label noise, error reporting |
+| Coverage | Which places does my training data represent? | Sampling bias, the area where a model applies |
+| Critical reflection | Who is the map for, and who bears its errors? | Fairness, privacy, deployment |
+
+: Seven habits of spatial thinking for GeoAI {#tbl-habits}
+
+## Representation and what a location means
+
+Every geographic dataset makes a decision about what a place is before any model sees it. A place can be a pixel, a polygon, a point, a node in a network, or a photograph taken from a street. The decision fixes the unit of prediction, and it limits what a model can possibly learn.
+
+Consider estimating poverty. The quantity you care about belongs to households, but the data rarely describe households directly. A survey might report average assets for a cluster of households. A satellite image describes a square of ground a few kilometers on a side. A government report might describe a district. Each representation supports a different claim, and a model trained at one of them cannot be assumed to say anything about the others.
+
+A second decision concerns how location enters the model. The simplest choice is to give the model the coordinates as two more columns. This is easy, and it can raise accuracy, but it invites the model to memorize where values are high or low instead of learning why. A richer choice describes each place by its context, such as the land cover within a kilometer, the distance to the nearest road, or the attributes of neighboring tracts. A third choice describes places by their relations, such as which places are connected by roads, flows of people, or shared institutions. Distance itself is a choice. Straight-line distance is convenient, while travel time, network distance, or social ties are often closer to the process at work.
+
+::: {.callout-tip title="Discuss"}
+Choose one of the running examples. List three different ways to represent where an observation is, for instance coordinates, an administrative identifier, and a description of the surrounding neighborhood. For each one, what could the model learn that it could not learn from the others, and what would it be tempted to memorize?
+:::
+
+## Dependence and the first law of geography
+
+Near things tend to be more related than distant things [@tobler1970]. This regularity, called spatial dependence or spatial autocorrelation, is both a resource and a hazard for GeoAI.
+
+It is a resource because it is what makes spatial prediction possible at all. Interpolation works because nearby values carry information about unmeasured places in between. Convolutional neural networks, which you will meet later in the book, are effective on imagery partly because they look at small neighborhoods of pixels, and neighboring pixels tend to belong to the same field, roof, or patch of forest.
+
+It is a hazard in at least three ways. The first concerns how much evidence you have. A thousand census tracts drawn from ten metropolitan areas are not a thousand independent pieces of information, because tracts in the same city share economies, climates, and histories. The effective sample size is smaller than the row count suggests, and a model that seems well supported may rest on surprisingly little.
+
+The second hazard concerns evaluation, and it is easiest to see in a small simulation. The code below creates a synthetic landscape with two observed features and one hidden spatial process that the features do not capture, which is common in real data. It samples 1,500 locations and trains a random forest using the two features plus the coordinates. It then estimates accuracy two ways. The random split assigns each location to one of five folds at random, so every test point has training neighbors nearby. The spatial split divides the landscape into blocks and holds out whole blocks at a time, so test points are farther from the training data.
+
+```{python}
+#| label: setup-sim
+#| code-fold: true
+#| code-summary: "Show the simulation code"
+import numpy as np
+from scipy.ndimage import gaussian_filter
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import KFold, GroupKFold, cross_val_score
+
+rng = np.random.default_rng(42)
+n = 100  # the landscape is an n by n grid
+
+def smooth_field(sigma):
+    """Random noise blurred into a spatially autocorrelated surface."""
+    f = gaussian_filter(rng.normal(size=(n, n)), sigma)
+    return (f - f.mean()) / f.std()
+
+x1, x2 = smooth_field(6), smooth_field(6)   # two observed features
+hidden = smooth_field(10)                   # a spatial process we do not observe
+y = 1.0 * x1 + 0.5 * x2**2 + 1.5 * hidden + rng.normal(scale=0.3, size=(n, n))
+
+# sample 1,500 locations
+idx = rng.choice(n * n, size=1500, replace=False)
+row, col = np.unravel_index(idx, (n, n))
+target = y[row, col]
+X_coords = np.column_stack([x1[row, col], x2[row, col], row, col])
+X_plain = X_coords[:, :2]
+
+# folds for the two evaluation strategies
+random_cv = KFold(5, shuffle=True, random_state=0)
+blocks = (row // 20) * 5 + (col // 20)      # a 5 by 5 grid of spatial blocks
+block_cv = GroupKFold(5)
+
+results = {}
+for name, X in [("Features and coordinates", X_coords), ("Features only", X_plain)]:
+    rf = RandomForestRegressor(n_estimators=200, random_state=0, n_jobs=-1)
+    r_rand = cross_val_score(rf, X, target, cv=random_cv, scoring="r2").mean()
+    r_block = cross_val_score(rf, X, target, cv=block_cv, groups=blocks, scoring="r2").mean()
+    results[name] = (r_rand, r_block)
+
+r_coord_rand, r_coord_block = results["Features and coordinates"]
+```
+
+```{python}
+#| label: fig-cv-gap
+#| fig-cap: "Random folds (left) scatter test points among training points, while block folds (center) hold out contiguous areas. The same model looks far more accurate under random folds (right)."
+#| fig-width: 11
+#| fig-height: 3.6
+#| code-fold: true
+#| code-summary: "Show the plotting code"
+import matplotlib.pyplot as plt
+
+random_fold = np.empty(len(target), dtype=int)
+for k, (_, test) in enumerate(random_cv.split(X_coords)):
+    random_fold[test] = k
+block_fold = np.empty(len(target), dtype=int)
+for k, (_, test) in enumerate(block_cv.split(X_coords, groups=blocks)):
+    block_fold[test] = k
+
+palette = ["#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e"]
+fig, axes = plt.subplots(1, 3, figsize=(11, 3.6))
+for ax, folds, title in [(axes[0], random_fold, "Random folds"),
+                         (axes[1], block_fold, "Spatial block folds")]:
+    ax.scatter(col, row, c=[palette[f] for f in folds], s=6)
+    ax.set_title(title)
+    ax.set_xticks([]); ax.set_yticks([]); ax.set_aspect("equal"); ax.invert_yaxis()
+
+names = list(results)
+xpos = np.arange(len(names))
+axes[2].bar(xpos - 0.2, [results[k][0] for k in names], 0.4, label="Random folds", color="#4c72b0")
+axes[2].bar(xpos + 0.2, [results[k][1] for k in names], 0.4, label="Block folds", color="#dd8452")
+axes[2].axhline(0, color="black", linewidth=0.8)
+axes[2].set_xticks(xpos, ["Features and\ncoordinates", "Features\nonly"])
+axes[2].set_ylabel("Cross-validated R²")
+axes[2].legend(frameon=False, fontsize=8)
+axes[2].spines[["top", "right"]].set_visible(False)
+plt.tight_layout()
+plt.show()
+```
+
+Under random folds, the model with coordinates reaches an R² of about `{python} f"{r_coord_rand:.2f}"`, which looks close to perfect. Under block folds, the same model reaches about `{python} f"{r_coord_block:.2f}"` (@fig-cv-gap). Nothing about the model changed. What changed is the question the evaluation asked. With random folds, every test point sits among training points, so the model can use the coordinates to look up what nearby training points looked like, and the hidden spatial process gets absorbed into that lookup. With block folds, the model has to predict in areas it has never seen, and the lookup stops working.
+
+Removing the coordinates does not make the problem go away. The features-only model scores about `{python} f"{results['Features only'][0]:.2f}"` under random folds and about `{python} f"{results['Features only'][1]:.2f}"` under block folds, which is worse than simply predicting the average everywhere. The features are spatially autocorrelated too, so a random split still lets the model match test points to near-identical training neighbors. Leakage comes from the data, not only from the coordinate columns.
+
+This pattern is not a quirk of simulation. Roberts and colleagues reviewed cross-validation for data with spatial, temporal, and hierarchical structure and recommended blocking wherever such dependence exists [@roberts2017]. Meyer and colleagues showed that target-oriented validation can change conclusions about which features and models are best [@meyer2018], and Ploton and colleagues found that spatial validation revealed poor predictive performance in widely used large-scale maps of forest biomass [@ploton2020].
+
+The third hazard is quieter. If a model's errors are themselves spatially autocorrelated, so that it overpredicts across one region and underpredicts across another, then the model has missed a spatial process. Mapping the residuals is one of the simplest and most informative checks in GeoAI, and it costs almost nothing.
+
+::: {.callout-tip title="Discuss"}
+Is the random-fold score in @fig-cv-gap wrong? Wadoux and colleagues argue that spatial cross-validation is not the right way to evaluate a map when the goal is to estimate its accuracy across a densely and randomly sampled area, because blocking then makes the test harder than the real use [@wadoux2021]. Others argue that blocking is necessary whenever a model will be used away from its training data. Decide which evaluation fits each of these uses, and explain why. A city wants a heat map for its own neighborhoods, where sensors are scattered evenly. A development agency wants poverty estimates for a country with no survey data. A researcher wants to know whether a relationship learned in one state holds in another.
+:::
+
+## Heterogeneity and relationships that change from place to place
+
+Spatial heterogeneity means that the process generating the data differs from place to place, so that a relationship learned in one area may be weaker, stronger, or even reversed in another. Goodchild describes it as a second fundamental principle of geographic information, alongside dependence [@goodchild2004]. Geographically weighted regression was developed to explore exactly this condition by fitting a separate, locally weighted regression around each location [@brunsdon1996].
+
+For machine learning, heterogeneity creates a problem that dependence does not. A single global model fitted to heterogeneous data learns an average relationship, weighted toward the places that contributed the most training data. It can score well overall while being systematically wrong in places that are underrepresented or simply different. The cooling effect of tree canopy may not be the same in a desert city as in a humid one, and the link between nighttime lights and household wealth may not be the same in a capital city as in a farming region. An overall accuracy number cannot show any of this, because it averages over exactly the places where the differences live.
+
+Heterogeneity also limits how far a result can travel. Goodchild and Li argue that replication across space should be expected to be weak in the social and environmental sciences, because the conditions that produced a result in one place are rarely the same elsewhere [@goodchild2021]. Zhu and colleagues offer a constructive version of the same idea, sometimes called the third law of geography, which holds that places with more similar geographic configurations tend to have more similar values [@zhu2018]. The practical lesson is that you should judge whether a model will transfer by how much the new place resembles the training places in the things that matter, not by how close the new place is on a map.
+
+Notice that dependence and heterogeneity interact. A random split cannot reveal a heterogeneity problem, because its test points come from the same regions as its training points. Only an evaluation that holds out whole regions shows whether a relationship travels.
+
+::: {.callout-tip title="Discuss"}
+You are building a model of urban heat for every city in the United States. Should you train one national model, a separate model for each city, or something in between? Consider how much training data each option has, whether results stay consistent across cities, what happens to small cities with little data, and who is helped or harmed by each choice.
+:::
+
+## Scale and the problem of the right unit
+
+Every spatial analysis involves at least three scales. The process scale is the scale at which the phenomenon actually operates. The measurement scale is the resolution and extent of the data. The model scale is the size of the area a model looks at to make a prediction, such as the size of an image tile or the radius of a buffer used to build features. When these do not match, models can learn patterns that belong to the data instead of the world.
+
+Geographers have long known that results change with the units used to aggregate data. The modifiable areal unit problem describes how statistics computed for areal units shift when the size or the boundaries of those units change, even though the underlying individuals are the same [@openshaw1984]. The ecological fallacy describes the error of inferring individual-level relationships from aggregate data [@robinson1950]. Kwan adds that even a careful analyst often does not know which geographic context actually influences a person, since the neighborhood that shapes someone's life rarely matches a census boundary, and she calls this the uncertain geographic context problem [@kwan2012].
+
+Each of these turns up in GeoAI. A model that predicts wealth for image tiles a few kilometers wide is making claims about tiles, not households, and treating its output as a household map invites the ecological fallacy. A buffer radius chosen for convenience may be too small to capture the commute that matters, or too large to separate a park from the highway beside it. A label measured for a small survey cluster may be attached to an image tile that covers several villages. None of these mistakes produces an error message.
+
+::: {.callout-tip title="Discuss"}
+A model predicts average wealth for every two-kilometer pixel in a country. A ministry asks whether it can use the map to decide which individual households receive cash transfers. What can the map honestly support, and what can it not? What would you tell the ministry, and how would you say it?
+:::
+
+## Uncertainty about where and what
+
+Geographic data are uncertain in their attributes and in their locations, and the second kind is easy to forget once coordinates are stored with many decimal places. Locations can be wrong because of geocoding errors, digitizing errors, or outdated maps. Sometimes they are wrong on purpose. To protect respondents' privacy, the Demographic and Health Surveys displace the published coordinates of their survey clusters, by up to two kilometers in urban areas and up to five kilometers in rural areas, with a small share of rural clusters displaced up to ten kilometers [@burgert2013]. These surveys are among the most common sources of labels for poverty mapping from satellite imagery [@jean2016; @yeh2020].
+
+Think about what that means for a model. If an image tile is centered on a displaced coordinate, the village whose wealth defines the label may be at the edge of the tile or outside it entirely. The model is then asked to learn a relationship between an image and a label that the image does not fully contain. The noise this creates is not random either, since rural clusters are displaced farther than urban ones. Similar issues arise when labels are drawn by hand from imagery and boundaries are vague, or when an image is captured in a different season or year from the survey it is paired with.
+
+Uncertainty also flows forward into results. A map of predictions with no indication of confidence looks equally certain everywhere, even where the model has little evidence. Reporting uncertainty alongside predictions is one of the most important habits you can build, and later chapters return to how to do it.
+
+::: {.callout-tip title="Discuss"}
+Your labels come with known location error. Three responses are possible. You could enlarge your image tiles so they almost certainly contain the true location, model the location error explicitly, or accept the noise and report its likely effect. What does each response cost, and what would change your choice?
+:::
+
+## Coverage and the places your data leave out
+
+Training data are almost never a random sample of the places a model will be applied to. Surveys go where funding and access allow. Volunteered map data are densest where volunteers live. Large image collections used to pretrain vision models have been shown to come disproportionately from a small number of countries, which can make the resulting models less reliable elsewhere [@shankar2017].
+
+A model has no way to know when it is predicting for a place unlike anything it has seen. It will produce an answer anyway, often with the same apparent confidence. Meyer and Pebesma propose estimating a model's area of applicability, the region in which the predictors resemble those seen during training closely enough that the model's estimated accuracy can be expected to hold, and flagging predictions outside it [@meyer2021]. The idea is simple and powerful. Before trusting a prediction, ask whether the model has ever seen a place like this.
+
+::: {.callout-tip title="Discuss"}
+Make a map, even a rough sketch, of where the training data for one of the running examples come from. Shade the areas where you would trust the model, the areas where you would be cautious, and the areas where you would refuse to report a prediction. What information would you need to draw this map properly?
+:::
+
+## Critical reflection on who is mapped and who decides
+
+The last habit asks about people instead of pixels. A map is an argument about the world, and the choices behind it reflect the interests and assumptions of the people who made it. Critical GIS scholars have long examined how geographic technologies can shape and serve power, including who is counted and who is left out [@pickles1995]. Applied to GeoAI, the questions sharpen. Who decided what counts as an informal settlement, a high-risk parcel, or a failing school? Who will act on the predictions, and who will live with the errors?
+
+Privacy deserves particular attention because location is unusually revealing. In a study of mobile phone records, four spatio-temporal points were enough to uniquely identify about 95 percent of individuals [@demontjoye2013]. Fine-grained predictions can expose people even when no names are attached. Predictions can also shape the data that train the next model. If a model directs inspections, services, or policing to certain places, then those places generate more records, which can make the next model even more confident about the same places.
+
+::: {.callout-tip title="Discuss"}
+Pick a GeoAI application you find promising. Describe one way it could benefit the people it maps and one way it could harm them. Who would need to be involved in its design for you to be comfortable deploying it?
+:::
+
+## What happens when spatial thinking is missing
+
+The failures in @tbl-failures share a pattern. Each one can produce a model that runs without errors, reports good accuracy, and looks convincing on a map, while still being wrong in ways that matter. This is why spatial thinking cannot be added at the end of a project. It has to shape the question, the data, the model, and the evaluation from the beginning.
+
+| Habit ignored | What tends to happen | How you might catch it |
+|----|----|----|
+| Representation | The model learns the wrong unit or memorizes coordinates | Compare models with and without location inputs, and ask what each one learned |
+| Dependence | Accuracy is inflated, and evidence looks stronger than it is | Compare random and spatial evaluation, and map the residuals |
+| Heterogeneity | Good average accuracy hides regions where the model fails | Report accuracy by region and test on held-out regions |
+| Scale | Patterns appear or vanish with the choice of units, or results are read at the wrong level | Repeat the analysis at several scales and state the unit of inference |
+| Uncertainty | Noisy labels cap accuracy, and maps look more certain than they are | Track known location error and report uncertainty with predictions |
+| Coverage | Confident predictions appear in places unlike the training data | Map where the training data come from and estimate where the model applies |
+| Critical reflection | Errors fall on people who had no say, and privacy is exposed | Ask who is affected and involve them, and check what the outputs reveal |
+
+: Common failures when spatial thinking is missing, and how to detect them {#tbl-failures}
+
+## A spatial audit
+
+The habits in this chapter can be condensed into a set of questions to ask of any GeoAI project, whether you are reviewing a paper, planning a thesis, or checking your own assignment.
+
+1. What is the unit of observation and the unit of prediction, and do they match the process you care about?
+2. How does location enter the model, as coordinates, context, relations, or not at all?
+3. How strongly are nearby observations related, and over what distance?
+4. Does the evaluation reflect how the model will be used, whether that is filling gaps in a sampled area or predicting in new places?
+5. Is there reason to expect the relationship to change across the study area, and has the model been tested region by region?
+6. At what scale were the inputs and labels measured, and at what scale are the results being interpreted?
+7. How accurate are the locations and the labels, and is that uncertainty reported?
+8. Where do the training data come from, and where will the model be applied?
+9. Who is affected by the predictions, and what could they reveal about people?
+
+The chapter on case studies applies these questions to each of the four running examples. You will find that each example stresses different habits. Land cover classification leans hard on scale and coverage. Poverty mapping runs into almost all of them at once.
+
+::: {.callout-tip title="Try it"}
+Choose a published GeoAI paper, or use one your instructor assigns, and carry out the spatial audit above. For each question, note whether the paper answers it, answers it partly, or does not address it. Then pick the single gap you think matters most and propose a concrete change to the study that would close it. Bring your audit to class, where you will compare notes with a partner who audited a different paper.
+
+If you want to go further, change the simulation in this chapter. Increase or decrease the smoothness of the hidden process, change the block size, or remove the coordinates, and record how the gap between random and block evaluation responds. Write two or three sentences explaining the pattern you see.
+:::
+
+::: {.callout-note title="Frontier"}
+Several of the questions in this chapter remain open research problems. One is how to evaluate spatial models at all, since the debate between those who favor spatial cross-validation and those who argue it misstates map accuracy is still active [@roberts2017; @wadoux2021]. Another is whether spatial structure should be built into model architectures, for example through location encoders or spatially varying parameters, or whether large models trained on enough data will learn it on their own, a question Janowicz and colleagues pose directly [@janowicz2020]. A third is how to measure and model location uncertainty inside learning systems instead of treating it as noise. A fourth is how to formalize transferability, so that the similarity reasoning of the third law of geography can tell a practitioner in advance whether a model will work somewhere new [@zhu2018; @goodchild2021]. As you read research papers, notice which of these questions each one engages, and which it quietly assumes away.
+:::
+
+::: {.callout-warning title="What could go wrong"}
+The common thread in this chapter is that spatial mistakes rarely announce themselves. Inflated accuracy, hidden regional failure, results read at the wrong scale, displaced labels, and predictions made far outside the training data can all coexist with a clean workflow and a persuasive map. The people most exposed to these errors are often those in places with the least data, the least say in how the model was built, and the most to lose if it is wrong. Treat a surprisingly good result as a reason to look harder, not a reason to stop.
+:::
+
+## Seminar questions
+
+These questions are meant for class discussion or a short written reflection. The first set suits everyone, and the second set is aimed at graduate students who want to push further.
+
+**For everyone**
+
+1. In your own words, why is it not enough to apply a standard machine learning workflow to geographic data?
+2. Which of the seven habits do you think is most often ignored in practice, and why?
+3. Think of a time a map persuaded you of something. What would you now want to know about how it was made?
+
+**Going further**
+
+4. Anselin identified dependence and heterogeneity as what makes spatial data special. Is that list complete for GeoAI, or do learning systems introduce new spatial properties that deserve the same status?
+5. If a model learns spatial structure implicitly from coordinates and achieves excellent accuracy on a well-designed spatial evaluation, does it still matter whether the model is spatially explicit? Argue both sides.
+6. Choose one habit from this chapter and describe how you would teach it to a classmate using a single worked example and one twist that forces them to adapt.
+
+## Summary
+
+- Spatial thinking combines concepts of space, tools of representation, and reasoning, and critical spatial thinking adds scrutiny of data and representations.
+- GeoAI requires schemas that connect geographic concepts to AI concepts, such as linking spatial autocorrelation to data leakage in evaluation.
+- Dependence makes spatial prediction possible and can also inflate accuracy, so evaluation has to match how a model will be used.
+- Heterogeneity means relationships vary across space, which limits how far a model can transfer and hides regional failures inside average accuracy.
+- Scale, location uncertainty, and the coverage of training data each shape what a model can honestly claim.
+- Critical reflection on who is mapped, who decides, and who bears the errors belongs inside the technical work, not after it.

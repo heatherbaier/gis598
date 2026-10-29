@@ -1,0 +1,31 @@
+---
+title: "Preface"
+---
+
+This book teaches geospatial artificial intelligence (GeoAI) to readers who come to it from GIS, geography, and urban planning. It is written for a research-centered course that mixes upper-level undergraduates with graduate students, so every chapter is built to work at more than one depth.
+
+## Who this book is for
+
+You do not need a computer science background. You should be comfortable with basic GIS concepts, and some exposure to Python will help, though Part 2 of the course sets up the working environment and reviews the essentials. The book is demanding on purpose. It asks you to think carefully about why a model works, where it will fail, and what that means for the people and places affected by it.
+
+## How each chapter is built
+
+Every chapter follows the same pattern, so you always know where to look.
+
+- **Core** is the main text. It builds the concepts and the code that everyone needs.
+- **Try it** boxes give short activities, discussion prompts, and notebooks that put the core ideas to work.
+- **Frontier** boxes point to recent research and open problems. They are written for graduate students and anyone who wants to push further, and they are optional for a first read.
+- **What could go wrong** boxes describe the ethical issues, biases, and failure modes that belong to the topic at hand. Ethics runs through the whole book and does not get a single chapter of its own.
+
+## Running examples
+
+Four examples return throughout the book, so you can see what each new method changes about a problem you already know.
+
+- California housing prices, which anchors the chapters on tabular data
+- Urban heat islands, which bridges tabular data and imagery
+- Poverty estimation from satellite imagery, which anchors deep learning and foundation models
+- Land cover classification, which anchors image segmentation
+
+## What this book leaves for later
+
+This edition focuses on supervised learning, computer vision, and the evaluation and deployment of models that use them. Methods for text and for graphs are saved for a later volume.
