@@ -10,7 +10,7 @@ return {
     local src = quarto.project.offset .. "/explorers/" .. name .. ".html"
     if quarto.doc.is_format("html") then
       return pandoc.RawBlock("html", string.format(
-        '<div class="column-body-outset">\n<iframe class="explorer-frame" src="%s" title="%s" loading="lazy" style="height:%spx"></iframe>\n' ..
+        '<div class="column-body-outset-right">\n<iframe class="explorer-frame" src="%s" title="%s" scrolling="no" loading="lazy" style="height:%spx"></iframe>\n' ..
         '<p class="explorer-note"><a href="%s" target="_blank" rel="noopener">Open this explorer in its own tab</a></p>\n</div>',
         src, title, height, src))
     end
