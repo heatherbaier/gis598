@@ -1,0 +1,217 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Geospatial Artificial Intelligence with Python",
+    "section": "",
+    "text": "0.1 Who this book is for\nThis book teaches geospatial artificial intelligence (GeoAI) to readers who come to it from GIS, geography, and urban planning. It is written for a research-centered course that mixes upper-level undergraduates with graduate students, so every chapter is built to work at more than one depth.\nYou do not need a computer science background. You should be comfortable with basic GIS concepts, and some exposure to Python will help, though Part 2 of the course sets up the working environment and reviews the essentials. The book is demanding on purpose. It asks you to think carefully about why a model works, where it will fail, and what that means for the people and places affected by it.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Preface</span>"
+    ]
+  },
+  {
+    "objectID": "index.html#how-each-chapter-is-built",
+    "href": "index.html#how-each-chapter-is-built",
+    "title": "Geospatial Artificial Intelligence with Python",
+    "section": "0.2 How each chapter is built",
+    "text": "0.2 How each chapter is built\nEvery chapter follows the same pattern, so you always know where to look.\n\nCore is the main text. It builds the concepts and the code that everyone needs.\nTry it boxes give short activities, discussion prompts, and notebooks that put the core ideas to work.\nFrontier boxes point to recent research and open problems. They are written for graduate students and anyone who wants to push further, and they are optional for a first read.\nWhat could go wrong boxes describe the ethical issues, biases, and failure modes that belong to the topic at hand. Ethics runs through the whole book and does not get a single chapter of its own.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Preface</span>"
+    ]
+  },
+  {
+    "objectID": "index.html#running-examples",
+    "href": "index.html#running-examples",
+    "title": "Geospatial Artificial Intelligence with Python",
+    "section": "0.3 Running examples",
+    "text": "0.3 Running examples\nFour examples return throughout the book, so you can see what each new method changes about a problem you already know.\n\nCalifornia housing prices, which anchors the chapters on tabular data\nUrban heat islands, which bridges tabular data and imagery\nPoverty estimation from satellite imagery, which anchors deep learning and foundation models\nLand cover classification, which anchors image segmentation",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Preface</span>"
+    ]
+  },
+  {
+    "objectID": "index.html#what-this-book-leaves-for-later",
+    "href": "index.html#what-this-book-leaves-for-later",
+    "title": "Geospatial Artificial Intelligence with Python",
+    "section": "0.4 What this book leaves for later",
+    "text": "0.4 What this book leaves for later\nThis edition focuses on supervised learning, computer vision, and the evaluation and deployment of models that use them. Methods for text and for graphs are saved for a later volume.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Preface</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/01-gis-and-spatial-analysis.html",
+    "href": "chapters/01-gis-and-spatial-analysis.html",
+    "title": "2  What is GIS and spatial analysis",
+    "section": "",
+    "text": "2.1 What a GIS does\nGeoAI is built on top of geographic information science, so this chapter sets a shared baseline for readers who arrive from different backgrounds. If you already work comfortably in a GIS, skim the first half and spend your time on the last two sections, which connect GIS ideas to modeling.\nA geographic information system (GIS) is a set of tools for capturing, storing, analyzing, managing, and presenting data that are tied to locations on Earth (Longley et al. 2015). The software matters less than the idea underneath it, which is that location is a first-class property of the data. A row in a table of schools is only a row. A row that carries a coordinate can be mapped, joined to the census tract it falls in, measured against the nearest highway, and compared with its neighbors.\nThe scientific questions behind the software make up geographic information science, and they include how to represent the world, how to reason about uncertainty, and how to analyze data that are tied to place (Goodchild 1992). Those questions do not go away when the analysis becomes automated. They become more important, because a model will accept whatever representation you hand it and will not warn you if that representation hides something that matters.",
+    "crumbs": [
+      "Foundations",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>What is GIS and spatial analysis</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/01-gis-and-spatial-analysis.html#representing-the-world",
+    "href": "chapters/01-gis-and-spatial-analysis.html#representing-the-world",
+    "title": "2  What is GIS and spatial analysis",
+    "section": "2.2 Representing the world",
+    "text": "2.2 Representing the world\nEvery geographic dataset is a simplified model of reality, and the two most common models are vector and raster.\n\n\n\nTable 2.1: Two common geographic data models\n\n\n\n\n\n\n\n\n\n\n\nModel\nBasic unit\nTypically used for\nExample\n\n\n\n\nVector\nPoints, lines, and polygons with attributes\nDiscrete objects with boundaries\nSchool locations, road networks, census tracts\n\n\nRaster\nA regular grid of cells, each with a value\nContinuous surfaces and imagery\nElevation, land surface temperature, satellite imagery\n\n\n\n\n\n\nThe choice carries consequences. A polygon of census tracts hides everything that varies inside each tract, while a raster of land surface temperature imposes a fixed grid on a world that has no grid. Geographers often describe this as the difference between thinking in terms of discrete objects and thinking in terms of continuous fields, and most real projects mix the two. A poverty estimation project, for example, may pair a raster of satellite imagery with vector survey locations and polygon administrative boundaries.\nAlongside the geometry, each feature or cell carries attributes, which are the values you measure, record, or want to predict. In machine learning terms, attributes become the features and the labels in your dataset. Getting from geometry plus attributes to a clean table or tensor is a large part of GeoAI work, and the data engineering chapters return to it in detail.\n\n2.2.1 Coordinate systems, scale, and resolution\nLocations only mean something relative to a coordinate reference system (CRS). A geographic CRS describes positions on the curved Earth with latitude and longitude, while a projected CRS flattens the Earth onto a plane so that distances and areas can be computed in familiar units. Every projection distorts something, whether area, shape, distance, or direction, so the right projection depends on the question. The familiar Web Mercator map, for example, exaggerates the size of places far from the equator, which would badly distort any analysis that compares areas.\nScale and resolution matter just as much. Resolution is the size of the smallest unit you can distinguish, such as the ground size of an image pixel, and scale is the extent over which you are working. A pattern that appears at the neighborhood scale can vanish at the national scale, and a model trained on data at one resolution may behave unpredictably on data at another. Keep both in mind as you read, because they return as a central theme in the chapter on spatial thinking.",
+    "crumbs": [
+      "Foundations",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>What is GIS and spatial analysis</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/01-gis-and-spatial-analysis.html#what-spatial-analysis-adds",
+    "href": "chapters/01-gis-and-spatial-analysis.html#what-spatial-analysis-adds",
+    "title": "2  What is GIS and spatial analysis",
+    "section": "2.3 What spatial analysis adds",
+    "text": "2.3 What spatial analysis adds\nSpatial analysis is the set of methods whose results change when the locations of the objects change. Common operations include overlay, which combines layers that cover the same area, buffering, which draws zones around features, spatial joins, which attach attributes based on location, distance and network analysis, and interpolation, which estimates values at places where nothing was measured. Spatial statistics adds tools for describing and testing patterns in space, such as clustering and hot spots.\nNearly all of these methods rest on one observation, usually called the first law of geography, which holds that near things tend to be more related than distant things (Tobler 1970). This sounds like common sense, and it has a sharp consequence for modeling. If nearby observations resemble each other, then they are not independent samples, and many standard statistical and machine learning assumptions quietly break. Two properties follow from this idea and will occupy much of this book. The first is spatial autocorrelation, the tendency of nearby values to be similar. The second is spatial heterogeneity, the tendency of relationships to differ from place to place. The chapter on spatial thinking develops both in depth.",
+    "crumbs": [
+      "Foundations",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>What is GIS and spatial analysis</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/01-gis-and-spatial-analysis.html#from-rules-to-learning",
+    "href": "chapters/01-gis-and-spatial-analysis.html#from-rules-to-learning",
+    "title": "2  What is GIS and spatial analysis",
+    "section": "2.4 From rules to learning",
+    "text": "2.4 From rules to learning\nA GIS analyst typically works by writing explicit rules. To map flooded areas, the analyst might declare that any cell below a certain elevation and within a certain distance of a river counts as at risk. The rule is transparent and easy to defend, but someone has to know the right thresholds in advance, and the rule cannot adapt to places where the relationship between elevation, distance, and flooding is different.\nMachine learning turns this around. Instead of specifying the rule, you provide examples of places and their outcomes, and the model learns a rule from them. That shift is powerful, and it is also risky, because the learned rule is only as good as the examples and the way you represent them. The next chapter introduces the learning problem directly. Everything you have just read about representation, coordinate systems, scale, and spatial dependence will decide whether a learned rule can be trusted.\n\n\n\n\n\n\nTipTry it\n\n\n\nPick a place you know well, such as your campus or neighborhood. Sketch how you would represent it as vector data, and then as a raster. For each version, write down two things that the representation captures well and two things that it loses. Compare your sketch with a classmate’s and look for places where you made different choices. Which choices would change a model trained on the data?\n\n\n\n\n\n\n\n\nNoteFrontier\n\n\n\nChoices about data models shape what an algorithm can learn, and researchers continue to debate how best to represent geographic phenomena for learning systems. Open questions include how to represent fields and objects in the same model, how to carry uncertainty about locations and boundaries through an analysis, and how much of a place’s meaning can be captured by coordinates alone. As you read papers in this area, notice what data model each one assumes and what that assumption leaves out.\n\n\n\n\n\n\n\n\nWarningWhat could go wrong\n\n\n\nMaps look authoritative, which makes representation errors easy to miss. A projection that distorts area can mislead any comparison between regions. Aggregating data into administrative units can hide inequality within them. Stripping a dataset down to coordinates can also expose people, since precise locations may reveal where individuals live. Treat every data model as an argument about the world and ask who and what it leaves out.",
+    "crumbs": [
+      "Foundations",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>What is GIS and spatial analysis</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/01-gis-and-spatial-analysis.html#summary",
+    "href": "chapters/01-gis-and-spatial-analysis.html#summary",
+    "title": "2  What is GIS and spatial analysis",
+    "section": "2.5 Summary",
+    "text": "2.5 Summary\n\nA GIS ties data to locations, and geographic information science studies how to represent and reason about that data.\nVector and raster models make different trade-offs, and the coordinate system, scale, and resolution all shape what an analysis can claim.\nSpatial analysis rests on the first law of geography, which implies that nearby observations are not independent.\nMachine learning replaces hand-written rules with rules learned from examples, which raises the stakes for how data are represented.\n\n\n\n\n\nGoodchild, Michael F. 1992. “Geographical Information Science.” International Journal of Geographical Information Systems 6 (1): 31–45.\n\n\nLongley, Paul A., Michael F. Goodchild, David J. Maguire, and David W. Rhind. 2015. Geographic Information Science and Systems. 4th ed. Wiley.\n\n\nTobler, Waldo R. 1970. “A Computer Movie Simulating Urban Growth in the Detroit Region.” Economic Geography 46 (sup1): 234–40.",
+    "crumbs": [
+      "Foundations",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>What is GIS and spatial analysis</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/02-ai-and-machine-learning.html",
+    "href": "chapters/02-ai-and-machine-learning.html",
+    "title": "3  What are AI and ML",
+    "section": "",
+    "text": "3.1 AI, machine learning, and deep learning\nMachine learning is the set of methods for building models from data instead of from hand-written rules, and nearly every GeoAI method is a machine learning method. This chapter introduces the vocabulary and the basic learning problem so that the rest of the book can use them without pausing to explain.\nArtificial intelligence (AI) is the broad goal of building systems that perform tasks that would normally call for human intelligence. The term dates to a workshop held at Dartmouth College in 1956, and early work leaned heavily on hand-written symbolic rules. Machine learning (ML) takes a different route. A program is said to learn when its performance on a task, judged by some measure, improves with experience (Mitchell 1997). Deep learning is the subset of machine learning that uses neural networks with many layers to learn useful representations directly from raw data such as images (Goodfellow et al. 2016).\nflowchart TB\n  subgraph AI[\"Artificial intelligence\"]\n    subgraph ML[\"Machine learning\"]\n      DL[\"Deep learning\"]\n    end\n  end\n\n\n\n\nFigure 3.1: Deep learning is a subset of machine learning, which is a subset of artificial intelligence.\nKeep the nesting in Figure 3.1 in mind, because the terms are often used as if they meant the same thing. Many useful models, including the decision trees and random forests that appear early in this book, are machine learning without being deep learning. A simpler model that you can inspect is often the better choice, and it is always the right baseline.",
+    "crumbs": [
+      "Foundations",
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>What are AI and ML</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/02-ai-and-machine-learning.html#the-learning-problem",
+    "href": "chapters/02-ai-and-machine-learning.html#the-learning-problem",
+    "title": "3  What are AI and ML",
+    "section": "3.2 The learning problem",
+    "text": "3.2 The learning problem\nMost of this book concerns supervised learning, in which you learn from examples that come with known answers. Each example has a set of inputs, called features, and an outcome, called the label. Suppose you want to predict the median home value of a census tract. The features might be median income, average house age, and distance to the coast, and the label is the home value you want to predict.\nA model is a function with adjustable parameters that maps features to a prediction.\n\\[\n\\hat{y} = f(\\mathbf{x}; \\theta)\n\\]\nHere \\(\\mathbf{x}\\) holds the features, \\(\\theta\\) holds the parameters, and \\(\\hat{y}\\) is the prediction. A loss function \\(L\\) measures how far a prediction is from the true label, and training means finding the parameters that make the average loss small across the training examples.\n\\[\n\\theta^{*} = \\arg\\min_{\\theta} \\; \\frac{1}{n} \\sum_{i=1}^{n} L\\big(y_i, f(\\mathbf{x}_i; \\theta)\\big)\n\\]\nWhen the label is a number, such as a home value, the task is regression. When the label is a category, such as a land cover class, the task is classification. Learning without labels is called unsupervised learning, and it is used to find structure in data, for example by grouping similar places together. A later part of the book returns to it as a way of exploring learned representations.",
+    "crumbs": [
+      "Foundations",
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>What are AI and ML</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/02-ai-and-machine-learning.html#generalization",
+    "href": "chapters/02-ai-and-machine-learning.html#generalization",
+    "title": "3  What are AI and ML",
+    "section": "3.3 Generalization",
+    "text": "3.3 Generalization\nA model that has memorized its training examples will score perfectly on them and poorly on anything new. This failure is called overfitting, and its opposite, underfitting, happens when a model is too simple to capture the pattern at all. What you actually care about is generalization, which is performance on new examples drawn from the situation where the model will be used (James et al. 2023).\nTo estimate generalization you hold data back. Practitioners usually divide a dataset into a training set used to fit the model, a validation set used to tune choices such as model type and settings, and a test set that is touched only once, at the end, to report performance. The test set only means something if it stands in honestly for the future use of the model.\nStandard practice also makes a quiet assumption, which is that the examples are independent and identically distributed, often shortened to i.i.d. Independence means that knowing one example tells you nothing extra about another. This is the assumption that geographic data tend to violate. Nearby places resemble each other, so a random split can place a training tract right next to the test tract it nearly duplicates, and the model appears to generalize when it has simply seen the neighborhood before. The next chapter, and much of the rest of the book, builds on this single problem.",
+    "crumbs": [
+      "Foundations",
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>What are AI and ML</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/02-ai-and-machine-learning.html#families-of-models",
+    "href": "chapters/02-ai-and-machine-learning.html#families-of-models",
+    "title": "3  What are AI and ML",
+    "section": "3.4 Families of models",
+    "text": "3.4 Families of models\nLater chapters introduce the main families of models in turn. Linear models, decision trees, and random forests work well on tabular data and are the first to try. Neural networks, and convolutional networks in particular, learn directly from imagery. Transformers and the foundation models built on them learn general-purpose representations from very large collections of data and can be adapted to many tasks. No family is best everywhere, and part of the craft of GeoAI is choosing the simplest model that answers the question.\n\n\n\n\n\n\nTipTry it\n\n\n\nImagine 20 pixels, each described by a red value and a near-infrared value and labeled as vegetation or not vegetation. On paper, plot the pixels and draw a rule that separates the two groups, then write the rule down in words. Next, think about how you chose it. Which pixels were hardest to classify, and how confident are you that your rule would work on a different image taken in a different season? You will compare your hand-drawn rule with one learned by a decision tree in a later chapter.\n\n\n\n\n\n\n\n\nNoteFrontier\n\n\n\nMuch of the history of machine learning is a shift from hand-engineered features toward learned representations, and the most recent shift is toward pretrained models that are adapted to new tasks with little additional training. Whether and how such models should be adapted to account for geography is an active research question, and the foundation models part of this book takes it up. A useful habit when reading new papers is to ask what each method assumes about the independence of its examples.\n\n\n\n\n\n\n\n\nWarningWhat could go wrong\n\n\n\nModels inherit the biases of the data and labels they learn from, and a single accuracy number can hide large differences in how well a model works for different places and groups. Labels are often noisy or produced by a process that reflects existing inequities, such as which neighborhoods get surveyed. A test set that does not resemble the places where a model will actually be used will produce a reassuring number that means very little.",
+    "crumbs": [
+      "Foundations",
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>What are AI and ML</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/02-ai-and-machine-learning.html#summary",
+    "href": "chapters/02-ai-and-machine-learning.html#summary",
+    "title": "3  What are AI and ML",
+    "section": "3.5 Summary",
+    "text": "3.5 Summary\n\nDeep learning is a subset of machine learning, which is a subset of artificial intelligence.\nSupervised learning fits a model that maps features to labels by minimizing a loss on training data.\nGeneralization is estimated on held-out data, and the estimate is only trustworthy if the held-out data resemble the situation of use.\nStandard evaluation assumes independent examples, and geographic data tend to break that assumption.\n\n\n\n\n\nGoodfellow, Ian, Yoshua Bengio, and Aaron Courville. 2016. Deep Learning. MIT Press.\n\n\nJames, Gareth, Daniela Witten, Trevor Hastie, Robert Tibshirani, and Jonathan Taylor. 2023. An Introduction to Statistical Learning with Applications in Python. Springer.\n\n\nMitchell, Tom M. 1997. Machine Learning. McGraw-Hill.",
+    "crumbs": [
+      "Foundations",
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>What are AI and ML</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/03-what-is-geoai.html",
+    "href": "chapters/03-what-is-geoai.html",
+    "title": "4  What is GeoAI",
+    "section": "",
+    "text": "4.1 Three ways to define GeoAI\nGeoAI is the use of artificial intelligence to solve geospatial problems. That sentence can sound like a small variation on applying AI to geospatial data, yet the difference shapes how you frame a question, build a dataset, choose a model, and decide whether the result can be trusted. This chapter makes that argument and gives you a way to apply it to any project you meet.\nPeople use the word GeoAI in at least three ways, and keeping them apart clears up many arguments.\nThe first is the data view, in which GeoAI is AI applied to geospatial data such as satellite imagery, GPS traces, or maps. This definition is easy to apply, and it is too broad. A convolutional network that classifies photographs does not become GeoAI because the photographs were taken from orbit. If the method treats every image as an isolated picture and the evaluation ignores where the images came from, nothing about the approach is geographic.\nThe second is the problem view, in which GeoAI is the use of AI to solve problems about places, patterns, and processes in space. What makes a project geospatial is the question, the labels, or the decision the result supports. This is the view that guides this book.\nThe third is the method view, in which GeoAI refers to spatially explicit AI, meaning methods that build spatial structure into the model itself (Janowicz et al. 2020). Examples include models that learn how relationships change across space or that encode location directly. The method view describes where the field wants to go, and the problem view describes what it is for.\nThese views nest instead of competing. A good GeoAI project starts from a geospatial problem, uses geospatial data, and increasingly uses methods that take space seriously.",
+    "crumbs": [
+      "Foundations",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>What is GeoAI</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/03-what-is-geoai.html#why-the-distinction-matters",
+    "href": "chapters/03-what-is-geoai.html#why-the-distinction-matters",
+    "title": "4  What is GeoAI",
+    "section": "4.2 Why the distinction matters",
+    "text": "4.2 Why the distinction matters\nConsider four projects, each of which uses AI and geospatial data.\n\n\n\nTable 4.1: Four projects and what space contributes to each\n\n\n\n\n\n\n\n\n\n\n\nProject\nGeospatial data\nGeospatial problem\nWhat space changes about the method\n\n\n\n\nClassify everyday photographs with a CNN\nNo\nNo\nNothing\n\n\nTrain a CNN on satellite tiles and score it with a random split of tiles\nYes\nPartly\nLittle, since neighboring tiles leak across the split\n\n\nEstimate poverty from imagery and test by holding out entire regions\nYes\nYes\nThe split, and ideally the model, respect spatial structure\n\n\nPredict housing prices from tract features and split rows at random\nYes\nYes\nLittle, and the reported accuracy is likely inflated\n\n\n\n\n\n\nThe last two rows of Table 4.1 have the same data type and the same kind of question, yet they differ in whether the project accounts for space. Spatial autocorrelation can make a randomly split test set look nearly identical to the training set, so a model can score well and still fail in a new region. A project that ignores this can pass every standard check and still mislead.",
+    "crumbs": [
+      "Foundations",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>What is GeoAI</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/03-what-is-geoai.html#a-short-test",
+    "href": "chapters/03-what-is-geoai.html#a-short-test",
+    "title": "4  What is GeoAI",
+    "section": "4.3 A short test",
+    "text": "4.3 A short test\nWhen you read a paper or plan your own project, four questions help you judge how seriously it treats space.\n\nDoes the question concern places, such as where something is, how it varies across space, or what is happening in a particular area?\nDo the labels or outcomes depend on location, so that nearby observations are related?\nWould a random train and test split be valid, or would it leak information between neighbors?\nWould the answer change if the scale, the resolution, or the boundaries of the study area changed?\n\nIf the answers suggest that space matters and the project does not address it, the project is applying AI to geospatial data without doing GeoAI. If you can answer these questions clearly, you have already done much of the hardest conceptual work.",
+    "crumbs": [
+      "Foundations",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>What is GeoAI</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/03-what-is-geoai.html#where-geoai-sits",
+    "href": "chapters/03-what-is-geoai.html#where-geoai-sits",
+    "title": "4  What is GeoAI",
+    "section": "4.4 Where GeoAI sits",
+    "text": "4.4 Where GeoAI sits\nGeoAI draws on three traditions. Geographic information science supplies the data models, the coordinate systems, and the long habit of asking how location shapes a result. Spatial statistics supplies tools for measuring and modeling dependence and variation across space. Artificial intelligence supplies flexible learning methods that can find patterns in large and complex data. None of these ideas is new. Researchers were already exploring neural networks and related methods for geographic problems in the 1990s (Openshaw and Openshaw 1997), and the next chapter traces that history. What is new is the scale of the data, the power of the models, and the ease with which anyone can run them, which is exactly why the habits in this chapter matter.\n\n\n\n\n\n\nTipTry it\n\n\n\nChoose five recent papers or projects that use machine learning with geographic data, for example from news coverage, a journal, or a conference. For each one, apply the four questions above and decide whether you would call it GeoAI. Bring your list to class and defend one case where you and a classmate disagreed. What would the authors have needed to do differently to change your mind?\n\n\n\n\n\n\n\n\nNoteFrontier\n\n\n\nThe boundaries of the field are still contested. Some researchers argue that GeoAI should be defined by spatially explicit methods, and others argue that a problem-centered definition is enough. A related open question is whether large pretrained models that take location as just another input can capture spatial structure well enough, or whether explicit spatial mechanisms will remain necessary. Pay attention to how each paper you read answers these questions, whether it says so openly or not.\n\n\n\n\n\n\n\n\nWarningWhat could go wrong\n\n\n\nCalling a project GeoAI because of its data type invites overconfidence, since the label suggests a rigor that the method may not have. Ignoring space also tends to produce inflated accuracy, and inflated accuracy tends to lead to models that are deployed where they have not been shown to work. The people most affected are often those in regions that were poorly represented in the training data.",
+    "crumbs": [
+      "Foundations",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>What is GeoAI</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/03-what-is-geoai.html#summary",
+    "href": "chapters/03-what-is-geoai.html#summary",
+    "title": "4  What is GeoAI",
+    "section": "4.5 Summary",
+    "text": "4.5 Summary\n\nGeoAI can be defined by its data, its problems, or its methods, and this book emphasizes the problem view while working toward the method view.\nApplying AI to geospatial data is not enough, because a project can ignore spatial structure and still look successful.\nFour questions about place, location-dependent labels, split validity, and scale help judge how seriously a project treats space.\nGeoAI combines geographic information science, spatial statistics, and artificial intelligence, and its core ideas have a long history.\n\n\n\n\n\nJanowicz, Krzysztof, Song Gao, Grant McKenzie, Yingjie Hu, and Budhendra Bhaduri. 2020. “GeoAI: Spatially Explicit Artificial Intelligence Techniques for Geographic Knowledge Discovery and Beyond.” International Journal of Geographical Information Science 34 (4): 625–36.\n\n\nOpenshaw, Stan, and Christine Openshaw. 1997. Artificial Intelligence in Geography. Wiley.",
+    "crumbs": [
+      "Foundations",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>What is GeoAI</span>"
+    ]
+  },
+  {
+    "objectID": "references.html",
+    "href": "references.html",
+    "title": "5  References",
+    "section": "",
+    "text": "Goodchild, Michael F. 1992. “Geographical Information\nScience.” International Journal of Geographical Information\nSystems 6 (1): 31–45.\n\n\nGoodfellow, Ian, Yoshua Bengio, and Aaron Courville. 2016. Deep\nLearning. MIT Press.\n\n\nJames, Gareth, Daniela Witten, Trevor Hastie, Robert Tibshirani, and\nJonathan Taylor. 2023. An Introduction to Statistical Learning with\nApplications in Python. Springer.\n\n\nJanowicz, Krzysztof, Song Gao, Grant McKenzie, Yingjie Hu, and Budhendra\nBhaduri. 2020. “GeoAI: Spatially Explicit Artificial\nIntelligence Techniques for Geographic Knowledge Discovery and\nBeyond.” International Journal of Geographical Information\nScience 34 (4): 625–36.\n\n\nLongley, Paul A., Michael F. Goodchild, David J. Maguire, and David W.\nRhind. 2015. Geographic Information Science and Systems. 4th\ned. Wiley.\n\n\nMitchell, Tom M. 1997. Machine Learning. McGraw-Hill.\n\n\nOpenshaw, Stan, and Christine Openshaw. 1997. Artificial\nIntelligence in Geography. Wiley.\n\n\nTobler, Waldo R. 1970. “A Computer Movie Simulating Urban Growth\nin the Detroit Region.” Economic Geography\n46 (sup1): 234–40.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>References</span>"
+    ]
+  }
+]
