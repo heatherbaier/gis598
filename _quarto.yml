@@ -1,6 +1,8 @@
 project:
   type: book
   output-dir: _book
+  resources:
+    - explorers/*.html
 
 book:
   title: "Geospatial Artificial Intelligence with Python"
@@ -16,6 +18,9 @@ book:
         - chapters/01-gis-and-spatial-analysis.qmd
         - chapters/02-ai-and-machine-learning.qmd
         - chapters/03-what-is-geoai.qmd
+    - part: "Supervised learning on tabular data"
+      chapters:
+        - chapters/3.2-decision-trees.qmd
     - references.qmd
 
 bibliography: references.bib
@@ -28,6 +33,9 @@ format:
     toc: true
     toc-depth: 3
     code-copy: true
+    include-after-body: includes/explorer-embed.html
+    shortcodes:
+      - shortcodes/explorer.lua
 
 execute:
   freeze: auto

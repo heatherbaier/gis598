@@ -1,0 +1,63 @@
+---
+title: "Decision trees"
+---
+
+<!--
+  PLACEHOLDER CHAPTER. The explorer below is the existing flood-risk decision tree, copied as is from the
+  GeoAI Explorer site, and the Core text is that page's intro text moved here. Both will be rewritten
+  around a running example once the case study is chosen. The structure is what matters for now.
+-->
+
+A decision tree learns a set of if/then rules from labeled examples. It asks a series of yes/no questions about the features of each example, such as whether a parcel is within 75 meters of a stream, and sends the example down one branch or the other until it reaches a prediction. This chapter builds your intuition for how a tree chooses its questions, using an interactive explorer in which you make the splits yourself.
+
+::: {.callout-note title="Learning objectives"}
+By the end of this chapter you should be able to
+
+- explain how a decision tree divides data by asking a sequence of questions about its features
+- use Gini impurity to compare candidate splits
+- read a fitted tree as a set of rules and judge whether those rules make sense for the problem
+:::
+
+## The problem
+
+Flood risk is the product of water accumulation and a parcel's ability to drain or resist it. Proximity to a stream determines exposure, since parcels close to a channel are the first to flood when it overflows. Exposure alone does not determine damage, though. A well-drained parcel on a steep slope sheds water quickly, while a flat, paved parcel with poor soils holds it.
+
+Suppose a county planning office wants to flag high-risk parcels before the next storm season, so that emergency managers can pre-position resources and planners can prioritize stormwater upgrades. You have 15 parcels where past flood events have been confirmed or ruled out. Each parcel is described by four features that can be measured from GIS layers, with no insurance claims history needed.
+
+## The data
+
+- **Distance to stream (m)** is the single strongest predictor here. Parcels within 50 to 100 meters of a channel face direct flooding when water levels rise, and beyond about 200 meters the risk drops sharply for most storms.
+- **Impervious surface (%)** measures roads, rooftops, and parking lots, which prevent infiltration. High impervious cover means runoff accumulates quickly and has nowhere to go.
+- **Slope (°)** matters because steep parcels shed water downhill and flat parcels let it pool. A low slope combined with poor drainage is a reliable risk indicator even far from streams.
+- **Drainage class** describes how well the soil drains (poor, moderate, or good). Poorly drained soils saturate quickly, which turns even modest rainfall into standing water.
+
+## Why use a decision tree
+
+A decision tree is one of the most interpretable models in machine learning. It produces explicit rules that a planner or emergency manager can read and check. A rule like "if distance to stream is 75 m or less and drainage is poor, then high risk" is one you could defend in a public meeting. Trees also handle mixed feature types well. This dataset has three numeric features and one categorical one, and a tree can use both without any special encoding.
+
+The key concept is **Gini impurity**, which measures how mixed the classes are at a node. A good split drives the impurity toward zero on both sides, so that one branch is mostly high risk and the other is mostly low risk.
+
+## Build a tree
+
+Use the explorer below to build the tree one split at a time. At each step, try different features and thresholds in the purity calculator, then choose the split that leaves each side dominated by a single class.
+
+{{< explorer decision-tree title="Decision tree explorer" height="760" >}}
+
+::: {.callout-tip title="Try it"}
+<!-- TODO: JiTT check-in questions for the asynchronous session go here. -->
+Build a tree with the explorer and write down the rules it produces. Then ask whether each rule would hold for a parcel the model has never seen, and which of your splits you trust the least.
+:::
+
+::: {.callout-note title="Frontier"}
+To be written.
+:::
+
+::: {.callout-warning title="What could go wrong"}
+To be written.
+:::
+
+## Summary
+
+- A decision tree learns if/then rules by repeatedly splitting the data on one feature at a time.
+- Gini impurity measures how mixed the classes are at a node, and a good split reduces it.
+- Trees handle numeric and categorical features together, and their rules can be read and checked by people.
