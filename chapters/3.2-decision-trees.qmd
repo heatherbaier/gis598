@@ -22,20 +22,26 @@ By the end of this chapter you should be able to
 
 Flood risk is the product of water accumulation and a parcel's ability to drain or resist it. Proximity to a stream determines exposure, since parcels close to a channel are the first to flood when it overflows. Exposure alone does not determine damage, though. A well-drained parcel on a steep slope sheds water quickly, while a flat, paved parcel with poor soils holds it.
 
+::: {.scenario}
 Suppose a county planning office wants to flag high-risk parcels before the next storm season, so that emergency managers can pre-position resources and planners can prioritize stormwater upgrades. You have 15 parcels where past flood events have been confirmed or ruled out. Each parcel is described by four features that can be measured from GIS layers, with no insurance claims history needed.
+:::
 
 ## The data
 
-- **Distance to stream (m)** is the single strongest predictor here. Parcels within 50 to 100 meters of a channel face direct flooding when water levels rise, and beyond about 200 meters the risk drops sharply for most storms.
-- **Impervious surface (%)** measures roads, rooftops, and parking lots, which prevent infiltration. High impervious cover means runoff accumulates quickly and has nowhere to go.
-- **Slope (°)** matters because steep parcels shed water downhill and flat parcels let it pool. A low slope combined with poor drainage is a reliable risk indicator even far from streams.
-- **Drainage class** describes how well the soil drains (poor, moderate, or good). Poorly drained soils saturate quickly, which turns even modest rainfall into standing water.
+::: {.variables}
+- **Distance to stream (m)** The single strongest predictor here. Parcels within 50 to 100 meters of a channel face direct flooding when water levels rise, and beyond about 200 meters the risk drops sharply for most storms.
+- **Impervious surface (%)** The share of the parcel covered by roads, rooftops, and parking lots, which prevent infiltration. High impervious cover means runoff accumulates quickly and has nowhere to go.
+- **Slope (°)** Steep parcels shed water downhill and flat parcels let it pool. A low slope combined with poor drainage is a reliable risk indicator even far from streams.
+- **Drainage class** How well the soil drains (poor, moderate, or good). Poorly drained soils saturate quickly, which turns even modest rainfall into standing water.
+:::
 
 ## Why use a decision tree
 
 A decision tree is one of the most interpretable models in machine learning. It produces explicit rules that a planner or emergency manager can read and check. A rule like "if distance to stream is 75 m or less and drainage is poor, then high risk" is one you could defend in a public meeting. Trees also handle mixed feature types well. This dataset has three numeric features and one categorical one, and a tree can use both without any special encoding.
 
+::: {.keyidea}
 The key concept is **Gini impurity**, which measures how mixed the classes are at a node. A good split drives the impurity toward zero on both sides, so that one branch is mostly high risk and the other is mostly low risk.
+:::
 
 ## Build a tree
 

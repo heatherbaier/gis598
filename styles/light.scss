@@ -1,0 +1,30 @@
+/*-- scss:defaults --*/
+// Palette shared with the interactive explorers
+$primary: #534ab7;
+$body-bg: #fcfcfa;
+$body-color: #1f1f26;
+$link-color: #534ab7;
+$link-decoration: none;
+$link-hover-decoration: underline;
+$font-family-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+$headings-font-weight: 700;
+$font-size-base: 1.04rem;
+$line-height-base: 1.75;
+$code-color: #534ab7;
+$callout-color-note: #534ab7;
+$callout-color-tip: #0f6e56;
+$callout-color-warning: #ba7517;
+$callout-color-important: #a32d2d;
+$callout-color-caution: #185fa5;
+
+/*-- scss:rules --*/
+:root {
+  --accent: #534ab7;
+  --side-bg: #f3f2fb;
+  --box-border: rgba(0, 0, 0, 0.09);
+  --card-bg: #ffffff;
+  --scenario-bg: #eeedfe;  --scenario-bd: #afa9ec;  --scenario-ink: #26215c;  --scenario-accent: #534ab7;
+  --keyidea-bg: #e1f5ee;   --keyidea-bd: #5dcaa5;   --keyidea-ink: #04342c;   --keyidea-accent: #0f6e56;
+  --definition-bg: #e6f1fb; --definition-bd: #85b7eb; --definition-ink: #0a2f52; --definition-accent: #185fa5;
+  --example-bg: #faeeda;   --example-bd: #ef9f27;   --example-ink: #412402;   --example-accent: #854f0b;
+}

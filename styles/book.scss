@@ -1,0 +1,117 @@
+/*-- scss:rules --*/
+
+// ---- Page and headings ----
+#quarto-sidebar { background: var(--side-bg); }
+#quarto-content { letter-spacing: 0.002em; }
+
+h1.title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+h1.title::after {
+  content: "";
+  display: block;
+  width: 3.5rem;
+  height: 0.3rem;
+  border-radius: 0.2rem;
+  margin-top: 0.8rem;
+  background: var(--accent);
+}
+h2 {
+  margin-top: 2.8rem;
+  padding-bottom: 0;
+  border-bottom: none;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+h2 .header-section-number { color: var(--accent); margin-right: 0.15rem; }
+h3 { margin-top: 1.9rem; font-weight: 700; }
+strong { font-weight: 650; }
+.content a:not(.btn) { text-underline-offset: 0.18em; }
+
+// ---- Sidebar ----
+.sidebar-navigation .sidebar-item-section > .sidebar-item-container .menu-text {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+.sidebar-navigation .sidebar-item a.active { color: var(--accent); font-weight: 650; }
+
+// ---- Built-in callouts (objectives, Try it, Frontier, What could go wrong) ----
+.callout.callout-style-default {
+  border-radius: 12px;
+  border-top: 1px solid var(--box-border);
+  border-right: 1px solid var(--box-border);
+  border-bottom: 1px solid var(--box-border);
+  border-left-width: 6px;
+  overflow: hidden;
+  margin: 1.6rem 0;
+}
+.callout.callout-style-default > div.callout-header {
+  opacity: 1;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding-top: 0.35rem;
+  padding-bottom: 0.2rem;
+}
+.callout.callout-style-default .callout-body { font-size: 0.97rem; line-height: 1.7; }
+
+// ---- Colored blocks: write ::: {.scenario} ... ::: and so on ----
+.scenario, .keyidea, .definition, .example {
+  border-radius: 14px;
+  padding: 1.05rem 1.4rem 1.1rem;
+  margin: 1.7rem 0;
+  border: 1px solid;
+}
+.scenario::before, .keyidea::before, .definition::before, .example::before {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.scenario > :last-child, .keyidea > :last-child, .definition > :last-child, .example > :last-child { margin-bottom: 0; }
+
+.scenario   { background: var(--scenario-bg);   border-color: var(--scenario-bd);   color: var(--scenario-ink); }
+.scenario::before   { content: "Scenario";   color: var(--scenario-accent); }
+.keyidea    { background: var(--keyidea-bg);    border-color: var(--keyidea-bd);    color: var(--keyidea-ink); }
+.keyidea::before    { content: "Key idea";   color: var(--keyidea-accent); }
+.definition { background: var(--definition-bg); border-color: var(--definition-bd); color: var(--definition-ink); }
+.definition::before { content: "Definition"; color: var(--definition-accent); }
+.example    { background: var(--example-bg);    border-color: var(--example-bd);    color: var(--example-ink); }
+.example::before    { content: "Example";    color: var(--example-accent); }
+.scenario strong, .keyidea strong, .definition strong, .example strong { color: inherit; }
+
+// ---- A bullet list shown as a grid of cards: ::: {.variables} ----
+.variables > ul {
+  list-style: none;
+  padding: 0;
+  margin: 1.4rem 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: 1rem;
+}
+.variables > ul > li {
+  background: var(--card-bg);
+  border: 1px solid var(--box-border);
+  border-top: 4px solid var(--accent);
+  border-radius: 12px;
+  padding: 0.85rem 1.05rem 0.95rem;
+  font-size: 0.93rem;
+  line-height: 1.6;
+}
+.variables > ul > li > strong:first-child { display: block; margin-bottom: 0.25rem; font-size: 1.02rem; }
+
+// ---- Tables, code, quotes ----
+table { font-size: 0.93rem; }
+.table > :not(caption) > * > * { padding: 0.5rem 0.75rem; }
+thead th { border-bottom: 2px solid var(--accent) !important; }
+div.sourceCode { border-radius: 10px; }
+blockquote { border-left: 4px solid var(--accent); padding: 0.2rem 0 0.2rem 1rem; }
