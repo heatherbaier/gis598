@@ -1,5 +1,5 @@
 ---
-title: "Spatial thinking in GeoAI"
+title: "1.5 Spatial thinking in GeoAI"
 execute:
   echo: true
   warning: false

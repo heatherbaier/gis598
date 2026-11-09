@@ -1,5 +1,5 @@
 ---
-title: "What is GeoAI"
+title: "1.3 What is GeoAI"
 ---
 
 GeoAI is the use of artificial intelligence to solve geospatial problems. That sentence can sound like a small variation on applying AI to geospatial data, yet the difference shapes how you frame a question, build a dataset, choose a model, and decide whether the result can be trusted. This chapter makes that argument and gives you a way to apply it to any project you meet.

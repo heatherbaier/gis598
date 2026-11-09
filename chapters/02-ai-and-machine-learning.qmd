@@ -1,5 +1,5 @@
 ---
-title: "What are AI and ML"
+title: "1.2 What are AI and ML"
 ---
 
 Machine learning is the set of methods for building models from data instead of from hand-written rules, and nearly every GeoAI method is a machine learning method. This chapter introduces the vocabulary and the basic learning problem so that the rest of the book can use them without pausing to explain.
