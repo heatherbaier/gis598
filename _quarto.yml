@@ -23,8 +23,11 @@ book:
         - chapters/2.1-k-means.qmd
     - part: "3 Supervised learning"
       chapters:
+        - chapters/3.1-supervised-learning-basics.qmd
         - chapters/3.2-decision-trees.qmd
         - chapters/3.3-random-forests.qmd
+        - chapters/3.4-spatial-cross-validation.qmd
+        - chapters/3.5-explainable-ai.qmd
         - chapters/3.6-neural-networks.qmd
     - references.qmd
 

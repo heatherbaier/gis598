@@ -1,0 +1,56 @@
+---
+title: "3.5 Explainable AI methods"
+---
+
+<!--
+  PLACEHOLDER. Drafted from the course outline and the Spring 2027 daily syllabus (Feb 24 session).
+  Outline description: "covers feature importance, partial dependence, and SHAP, along with what these
+  tools can and cannot say about spatial processes." Replace the italic notes with text as each section
+  is written.
+-->
+
+A model that predicts well can still be a black box. Explainability methods try to show which inputs a model relies on and how they change its predictions. This chapter covers three common ones, feature importance, partial dependence, and SHAP, and spends as much time on what they cannot tell you as on what they can, especially when the thing being explained is a spatial process.
+
+::: {.callout-note title="Learning objectives"}
+By the end of this chapter you should be able to
+
+- compute and read feature importance, partial dependence, and SHAP values for a trained model
+- explain what each method measures and how they differ
+- say what these explanations can and cannot reveal about a spatial process
+- explain why an explanation of a model is not the same as a causal explanation of the world
+:::
+
+## Feature importance
+
+*To be written. Which features a model leans on most, and how that is measured.*
+
+## Partial dependence
+
+*To be written. How the prediction changes as one feature changes while the others are held fixed.*
+
+## SHAP
+
+*To be written. Splitting an individual prediction into contributions from each feature.*
+
+## What explanations can and cannot say
+
+*To be written. Explanations describe the model and not necessarily the world, and spatial data add problems of their own, such as features that are correlated with each other and with location.*
+
+::: {.callout-tip title="Try it"}
+<!-- Draft prompt based on the syllabus activity for this session. -->
+Compute feature importance, partial dependence, and SHAP values for your own model. Do they agree with each other? Which explanation would you trust the most, and what would you want to check before using it in a report?
+:::
+
+::: {.callout-note title="Frontier"}
+<!-- Outline theme for this part: interpreting explanations on spatially autocorrelated features. -->
+It is still an open question how to interpret explanations when the features are spatially autocorrelated. To be written.
+:::
+
+::: {.callout-warning title="What could go wrong"}
+<!-- Outline theme for this part: explanations that look convincing but are not causal. -->
+To be written.
+:::
+
+## Summary
+
+*To be written.*
