@@ -1,0 +1,74 @@
+---
+title: "Random forests"
+---
+
+<!--
+  PLACEHOLDER CHAPTER. The explorer below is the existing Houston flood-risk random forest, copied as is
+  from the GeoAI Explorer site, and the Core text is that page's intro text moved here. Both will be
+  rewritten once the case study is chosen. The structure is what matters for now.
+-->
+
+A single decision tree is easy to read, but it is also fragile. Change a few of the training examples and the tree can come out looking completely different. A random forest addresses this by training many trees, each on a different random sample of the data, and letting them vote. This chapter explains why that works, using an interactive explorer in which you read three trees, trace parcels through each of them by hand, and watch the vote do better than any single tree.
+
+::: {.callout-note title="Learning objectives"}
+By the end of this chapter you should be able to
+
+- explain why a single decision tree is unstable and how averaging many trees reduces that problem
+- describe how a random forest builds its trees from random subsamples of the rows and features
+- trace an example through several trees and combine their predictions by majority vote
+- read feature importance from a forest and say what it does and does not tell you
+:::
+
+## The problem
+
+Houston sits on a flat coastal plain with clay-heavy soils that drain poorly, crossed by a network of bayous, including Buffalo Bayou, Brays Bayou, and White Oak Bayou, that overflow during heavy rainfall. It is also one of the most impervious urban surfaces in the United States. Decades of low-density sprawl replaced native prairie with concrete, which sharply reduced how much rain soaks into the ground. Parcels close to a bayou, with a lot of paved surface, a flat grade, and poorly draining soil, face compounding risk, because each of these factors makes the others worse.
+
+::: {.scenario}
+It is August in Houston. The county's emergency management office has finished reviewing damage from the last storm cycle and wants a more reliable risk model than the single decision tree from the previous chapter, one that will not fall apart when a few training parcels change. A colleague suggests a random forest. Instead of one tree trained on all of the data, you build many trees, each on a different random subsample, and let them vote.
+:::
+
+## The data
+
+The parcels are described by the same four features as in the previous chapter, which were chosen to capture how these factors interact.
+
+::: {.variables}
+- **Distance to stream (m)** The dominant risk factor here. Parcels within 75 meters of a bayou face direct flooding during moderate storms, and beyond 200 meters the risk drops sharply for most storm types.
+- **Impervious surface (%)** Houston's bayou corridors are lined with heavily paved neighborhoods. Paved surfaces prevent infiltration and send runoff directly into the channels.
+- **Slope (°)** The coastal plain is nearly flat. Even a slope of 5 to 8 degrees substantially improves drainage, while very flat parcels (under 3 degrees) pond water in place regardless of soil type.
+- **Drainage class** Houston's heavy clay soils drain poorly. Drainage class captures how fast water soaks in, independently of slope and pavement.
+:::
+
+## Why use a random forest
+
+A single decision tree is brittle, and that matters in flood risk modeling, where the labels (past flood events) are sparse and noisy. A random forest trains many trees on different random subsamples of the data, and each tree also sees only a random subset of the features. No single tree sees the full picture, but the mistakes each tree makes are different from one another. When the trees vote, the mistakes that are particular to one tree get outvoted, and only the patterns that show up across many trees survive.
+
+::: {.keyidea}
+Using less data per tree makes the forest more accurate because each tree makes different errors. Errors that belong to one tree alone get outvoted. The errors that remain are the ones shared by all of the trees, and those reflect real difficulty in the data and not random noise.
+:::
+
+A real forest in scikit-learn uses hundreds of trees. The explorer uses three, which is small enough that you can read every split and large enough to see what happens when the trees disagree.
+
+## Explore a forest
+
+The explorer has three parts. In the first you look at the three trees and notice that each one chose a different first split. In the second you classify test parcels by tracing them through each tree and voting. In the third you compare the forest with the individual trees and look at which features mattered most.
+
+{{< explorer random-forest title="Random forest explorer" height="820" >}}
+
+::: {.callout-tip title="Try it"}
+<!-- TODO: JiTT check-in questions for the asynchronous session go here. -->
+Find a parcel where the three trees disagree. Which tree would you trust for that parcel, and why? Then ask how your answer would change if the forest had a hundred trees instead of three.
+:::
+
+::: {.callout-note title="Frontier"}
+To be written.
+:::
+
+::: {.callout-warning title="What could go wrong"}
+To be written.
+:::
+
+## Summary
+
+- A single decision tree is unstable, so small changes in the training data can change its structure a lot.
+- A random forest trains many trees on random subsamples of the rows and features, then combines them by majority vote.
+- Errors that are particular to one tree get outvoted, so the forest is usually more reliable than any one tree.
