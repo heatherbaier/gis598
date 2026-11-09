@@ -1,0 +1,74 @@
+---
+title: "Neural networks"
+---
+
+<!--
+  PLACEHOLDER CHAPTER. The explorer below is the existing Phoenix urban heat island feed-forward network,
+  copied as is from the GeoAI Explorer site (with its link to the old training page removed), and the Core
+  text is that page's intro text moved here. Both will be revisited once the case study is chosen. The
+  training and PyTorch sections of this chapter are not written yet.
+-->
+
+A decision tree asks one question at a time. A neural network does something different. It runs many small pattern detectors in parallel, and each one responds to a different combination of the inputs. This chapter starts with the mechanics. Before asking how a network learns, you will work through a single forward pass by hand, so that you know exactly what the model is computing when it makes a prediction.
+
+::: {.callout-note title="Learning objectives"}
+By the end of this chapter you should be able to
+
+- describe what a single neuron computes, in terms of a weighted sum of its inputs
+- explain why a network needs an activation function such as ReLU
+- follow one example through a small network, from standardized inputs to a predicted class
+- explain how softmax turns the network's raw output scores into probabilities
+:::
+
+## The problem
+
+Urban areas are noticeably warmer than the land around them, sometimes by 5 to 10°F at night. Cities replace vegetation and soil, which absorb water and provide shade, with dark surfaces like asphalt and concrete that hold heat and release it long after sunset. This is the urban heat island effect. In Phoenix it adds to an already extreme climate, and neighborhoods with a strong heat island see more heat-related illness, higher energy costs, and worse air quality. These effects fall hardest on low-income communities and communities of color, which tend to have less tree canopy and more paved surface.
+
+::: {.scenario}
+It is July in Phoenix, temperatures are reaching 115°F, and the city's sustainability office wants to know which neighborhoods face the strongest urban heat island effect, so that it can prioritize shade trees, cool pavement, and the locations of cooling centers. You have satellite-derived measurements for dozens of neighborhoods. A colleague suggests training a neural network to predict heat island intensity from four of them.
+:::
+
+## The data
+
+::: {.variables}
+- **Tree canopy (%)** Trees provide shade, lower surface temperatures through evapotranspiration, and block solar radiation. Higher canopy means a weaker heat island, and in Phoenix this is often the strongest predictor.
+- **Impervious surface (%)** Roads, parking lots, and rooftops absorb and hold heat. High impervious cover is strongly related to higher nighttime temperatures.
+- **Building height (m)** Taller buildings trap heat in street-level canyons by blocking wind and reflecting radiation back toward the ground.
+- **Distance to park (m)** Parks act as cool islands, so neighborhoods that are farther from green space lose that cooling.
+:::
+
+## Why use a neural network
+
+A decision tree asks about one feature at a time, such as whether impervious surface is above 60%, and then whether canopy is below 20%. In a neural network, each hidden neuron learns to respond to a different combination of the inputs at once. One neuron might respond strongly to high impervious surface together with low canopy, and another to tall buildings together with a long distance to a park. The final prediction combines whatever each of these detectors found.
+
+::: {.keyidea}
+A neural network is made of pattern detectors that run in parallel. Each neuron computes a weighted sum of its inputs and then decides, through its activation function, whether the pattern was present strongly enough to pass on.
+:::
+
+The explorer below uses random weights, so the numbers are not meaningful yet. That is on purpose, because the goal here is to understand the mechanics. The pattern-detector idea only becomes real once the weights have been learned from data, which is the subject of the next sections.
+
+## Follow a forward pass
+
+The explorer begins with a short demonstration of why a network needs an activation function, which you can try by dragging the slider. Below that, it shows one neighborhood's four inputs, each standardized so that they are on the same scale. Click a hidden neuron to see its weights, work out its weighted sum by hand, and type in your answer, and the explorer checks your arithmetic. Then you decide what ReLU does with that result, and you see how softmax turns the two output scores into probabilities. The "Randomize location" button picks a different neighborhood, and "Randomize weights" gives the network new weights.
+
+{{< explorer neural-network title="Feed-forward neural network explorer" height="1100" >}}
+
+::: {.callout-tip title="Try it"}
+<!-- TODO: JiTT check-in questions go here. -->
+Work through all three hidden neurons for one neighborhood until you can say, in your own words, which of them fired and why. Then randomize the weights and look at the same neighborhood again. What changed in the prediction, and what does that tell you about what the weights represent?
+:::
+
+::: {.callout-note title="Frontier"}
+To be written.
+:::
+
+::: {.callout-warning title="What could go wrong"}
+To be written.
+:::
+
+## Summary
+
+- A neuron computes a weighted sum of its inputs, and an activation function such as ReLU decides whether it passes a signal on.
+- Without an activation function, stacking layers would still give a linear model, so the activation is what lets a network learn thresholds and interactions.
+- Softmax converts a network's raw output scores into probabilities that add up to one.
+- The weights are what the network learns, and the next sections show how.
