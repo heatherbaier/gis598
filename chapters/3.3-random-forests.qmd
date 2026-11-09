@@ -1,5 +1,5 @@
 ---
-title: "Random forests"
+title: "3.3 Random forests"
 ---
 
 <!--

@@ -1,5 +1,5 @@
 ---
-title: "What is GIS and spatial analysis"
+title: "1.1 What is GIS and spatial analysis"
 ---
 
 GeoAI is built on top of geographic information science, so this chapter sets a shared baseline for readers who arrive from different backgrounds. If you already work comfortably in a GIS, skim the first half and spend your time on the last two sections, which connect GIS ideas to modeling.

@@ -1,0 +1,10 @@
+---
+title: "2.1 K-means clustering"
+---
+
+<!--
+  STUB. The K-means explorer and its text have not been moved into the book yet. Replace this page
+  with the chapter when they are.
+-->
+
+K-means groups examples into a chosen number of clusters without using labels. This chapter has not been written yet.

@@ -13,12 +13,15 @@ book:
     style: docked
   chapters:
     - index.qmd
-    - part: "Foundations"
+    - part: "1 Foundations"
       chapters:
         - chapters/01-gis-and-spatial-analysis.qmd
         - chapters/02-ai-and-machine-learning.qmd
         - chapters/03-what-is-geoai.qmd
-    - part: "Supervised learning on tabular data"
+    - part: "2 Unsupervised learning"
+      chapters:
+        - chapters/2.1-k-means.qmd
+    - part: "3 Supervised learning"
       chapters:
         - chapters/3.2-decision-trees.qmd
         - chapters/3.3-random-forests.qmd
@@ -32,6 +35,9 @@ format:
     theme:
       light: [cosmo, styles/light.scss, styles/book.scss]
       dark: [darkly, styles/dark.scss, styles/book.scss]
+    number-sections: false
+    filters:
+      - filters/chapter-numbers.lua
     toc: true
     toc-depth: 3
     code-copy: true
