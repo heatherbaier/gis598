@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fit a line explorer</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f8f8f6; --surface: #ffffff; --surface2: #f2f1ed;
+    --border: rgba(0,0,0,0.10); --border2: rgba(0,0,0,0.18);
+    --text: #1a1a1e; --text2: #5a5a62; --text3: #9a9a9f;
+    --blue: #185fa5; --teal: #0f6e56; --amber: #ba7517; --red: #a32d2d; --purple: #534ab7;
+    --purple-bg: #eeedfe; --purple-bd: #afa9ec; --purple-txt: #26215c;
+    --radius: 10px; --radius-lg: 14px;
+  }
+  :root[data-theme="dark"] {
+    --bg: #16161a; --surface: #1e1e24; --surface2: #26262e;
+    --border: rgba(255,255,255,0.10); --border2: rgba(255,255,255,0.18);
+    --text: #e8e8ec; --text2: #9a9aa4; --text3: #6a6a74;
+    --blue: #6fb0ee; --teal: #4cc2a0; --amber: #e3a44a; --red: #f08a8a; --purple: #9a93f0;
+    --purple-bg: #1a1840; --purple-bd: #534ab7; --purple-txt: #cecbf6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #16161a; --surface: #1e1e24; --surface2: #26262e;
+      --border: rgba(255,255,255,0.10); --border2: rgba(255,255,255,0.18);
+      --text: #e8e8ec; --text2: #9a9aa4; --text3: #6a6a74;
+      --blue: #6fb0ee; --teal: #4cc2a0; --amber: #e3a44a; --red: #f08a8a; --purple: #9a93f0;
+      --purple-bg: #1a1840; --purple-bd: #534ab7; --purple-txt: #cecbf6;
+    }
+  }
+  html { overflow: hidden; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.55; }
+  .wrap { padding: 1rem; }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.1rem; }
+  .panel-title { font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--text3); margin-bottom: 8px; }
+  .btn { padding: 7px 14px; font-size: 13px; border-radius: 7px; cursor: pointer; border: 1px solid var(--border2); background: var(--surface2); color: var(--text); font-family: inherit; }
+  .btn:hover { background: var(--border); }
+  .btn.primary { background: var(--purple); color: #fff; border-color: var(--purple); }
+  .btn.primary:hover { opacity: .9; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  input[type=range] { width: 100%; accent-color: var(--purple); }
+  canvas { display: block; width: 100%; border-radius: 8px; background: var(--surface2); }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--text2); margin-top: 8px; }
+  .legend span.sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+  .note { font-size: 11.5px; color: var(--text3); line-height: 1.5; }
+
+  .grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+  .ctl { margin-bottom: 14px; }
+  .ctl label { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .ctl label span.val { font-weight: 500; color: var(--purple); font-variant-numeric: tabular-nums; }
+  .ctl .hint { font-size: 11.5px; color: var(--text3); margin-bottom: 4px; }
+  .seg { display: flex; border: 1px solid var(--border2); border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
+  .seg button { flex: 1; padding: 7px 8px; font-size: 12.5px; border: none; background: var(--surface2); color: var(--text2); cursor: pointer; font-family: inherit; }
+  .seg button.on { background: var(--purple); color: #fff; font-weight: 600; }
+  .readout { background: var(--surface2); border-radius: 9px; padding: 10px 12px; margin-bottom: 12px; }
+  .readout .big { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.15; }
+  .readout .lab { font-size: 12px; color: var(--text2); }
+  .reveal { border: 1px dashed var(--purple-bd); background: var(--purple-bg); color: var(--purple-txt); border-radius: 9px; padding: 9px 12px; font-size: 12.5px; margin-top: 12px; display: none; }
+  .reveal b { font-variant-numeric: tabular-nums; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="grid">
+    <div>
+      <canvas id="cv" height="380"></canvas>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--purple)"></span>block group</span>
+        <span><span class="sw" style="background:var(--amber)"></span>value capped in the census data ($500,000)</span>
+        <span><span class="sw" style="background:transparent;border:2px solid var(--text);width:14px;height:0;border-radius:0;vertical-align:3px"></span>your line</span>
+        <span id="lg-best" style="display:none"><span class="sw" style="background:transparent;border-top:2px dashed var(--teal);width:14px;height:0;border-radius:0;vertical-align:3px"></span>best line</span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ctl">
+        <label>Intercept <span class="val" id="vA"></span></label>
+        <div class="hint">The line's height where income is zero.</div>
+        <input type="range" id="sA" min="-100000" max="300000" step="1000">
+      </div>
+      <div class="ctl">
+        <label>Slope <span class="val" id="vB"></span></label>
+        <div class="hint">How much the line rises for each extra $1,000 of income.</div>
+        <input type="range" id="sB" min="0" max="10000" step="50">
+      </div>
+      <div class="panel-title" style="margin-bottom:4px">How to measure the error</div>
+      <div class="seg" id="seg">
+        <button data-mode="sq" class="on">Squared error</button>
+        <button data-mode="abs">Absolute error</button>
+      </div>
+      <div class="readout">
+        <div class="lab" id="rdLab"></div>
+        <div class="big" id="rdVal"></div>
+        <div class="note" id="rdNote" style="margin-top:3px"></div>
+      </div>
+      <div class="row">
+        <button class="btn primary" id="btnReveal" disabled>Show the least squares line</button>
+        <button class="btn" id="btnReset">Reset</button>
+      </div>
+      <div class="note" id="revealHint" style="margin-top:6px">Move the line first. The button unlocks once you have.</div>
+      <div class="reveal" id="reveal"></div>
+    </div>
+  </div>
+</div>
+<script>
+const D = {"x":[17.1,45.6,29.9,65.4,10.2,16.4,27.7,21.9,18.8,37.9,28.7,8.9,25.2,120.9,43.4,33.8,53.4,37.0,31.7,51.7,43.9,57.4,24.7,23.6,5.0,41.0,17.5,31.2,34.2,48.0,46.6,32.0,65.1,36.6,44.9,42.5,57.3,31.4,79.0,36.7,70.5,53.0,41.0,31.2,43.1,19.9,45.4,37.4,30.7,21.5,16.3,36.6,41.6,21.2,35.4,24.8,60.3,62.4,71.2,20.6,36.6,53.0,18.7,53.2,21.8,60.8,34.6,45.1,53.1,52.3,30.4,36.2,43.8,41.2,26.9,23.9,44.1,20.0,81.1,48.5,32.1,103.5,59.6,26.0,32.8,28.5,38.6,63.3,26.5,48.5,42.9,39.0,19.9,60.8,31.8,43.9,45.7,32.2,23.2,34.8,62.0,61.1,17.2,41.2,18.8,36.6,35.4,32.7,38.9,16.2,17.2,47.4,25.9,36.6,50.5,26.8,63.0,52.8,21.8,45.7,29.1,23.8,17.7,55.7,17.0,13.5,31.8,30.2,40.2,30.1,29.8,15.2,44.6,28.8,37.1,66.0,55.0,47.6,19.1,11.0,23.8,17.1,26.8,53.1,52.6,61.3,39.8,23.0,79.6,44.9,22.0,32.2,97.2,43.0,17.5,27.2,26.4,40.7,47.5,34.5,35.7,23.8,25.5,25.3,53.1,51.3,40.9,46.5,72.3,45.3,150.0,31.8,17.8,47.0,40.1,31.5,32.8,33.7,125.9,68.8,11.3,42.3,20.0,25.6,19.9,84.3,19.8,47.9,34.1,19.3,40.9,74.6,45.0,26.1,30.7,43.0,95.2,31.5,40.5,37.8,12.8,37.2,32.1,92.3,34.5,62.0,22.8,18.6,21.5,24.1,39.3,26.8,38.1,26.3,19.1,43.8,44.8,51.6,19.6,32.2,12.8,8.3,73.7,16.8,35.0,39.3,35.7,37.0,24.6,27.1,14.2,48.6,25.9,38.4,21.4,35.2,18.3,40.5,24.8,29.4,26.1,41.2,20.6,33.5,19.2,57.8,34.0,20.3,15.2,36.3,82.2,31.7,31.2,34.9,19.8,19.5,22.9,55.7,25.8,28.9,56.7,38.6,41.7,47.2,43.5,38.6,49.4,48.3,19.7,61.0,40.1,50.0,69.8,12.8,82.8,95.6,65.6,32.3,35.9,62.5,73.5,42.3,23.2,31.9,72.9,33.1,23.3,16.4,65.0,25.7,30.7,35.9,30.4,47.8,30.7,28.8,50.2,74.1,41.2,43.3,16.6,21.4,26.6,108.3,50.0,124.2,50.1,15.2,63.7,21.2,36.5,19.1,11.5,36.9,36.6,50.4,59.5,23.1,22.4,51.2,55.0,38.8,76.5,25.6,36.5,31.2,113.4,36.1,106.0,29.6,20.4,43.4,20.0,40.2,43.6,37.2,112.9,19.0,50.4,25.3,18.2,20.6,40.6,17.3,36.1,21.7,34.3,64.1,39.4,16.8,60.2,28.2,13.8,37.2,28.5,39.1,40.7,56.2,39.3,40.2,33.8,44.9,32.4,42.6,39.8,37.1,45.4,38.9,150.0,41.3,30.2,37.8,39.5,38.3,40.2,31.4,35.8,51.3,21.3,33.5,41.6,46.5,29.1,56.7,23.4,20.1,22.3,17.8,59.0,30.4,19.6,79.8,31.5,31.0,49.1,60.2,46.7,41.9,48.6,24.3],"y":[55900,286900,165300,291500,78600,130000,500000,165000,162500,173200,113600,91900,114200,500001,139700,168100,279300,287900,121500,294200,380400,321900,177800,108700,500001,166400,87500,242700,92800,220800,136000,320800,371200,188000,218900,279100,260900,268000,393000,160100,331400,319000,315000,224000,293500,139600,256000,228000,347800,76900,134300,344200,214800,94400,155100,123600,356000,472700,500001,88900,282100,235700,61500,265700,75200,341400,160900,139000,157300,124900,238500,211600,248100,72000,62400,49200,165800,84200,365700,202600,212700,500001,214900,139300,181400,139400,318600,237700,72300,186900,150700,202700,125400,252600,222600,184800,189900,205300,250000,206900,201800,258600,94300,219500,247500,183200,114800,78700,123700,69500,105800,331000,185100,195100,163900,120600,498400,229500,156300,271500,143100,500001,41400,225900,91300,60000,191100,112500,182500,175000,184400,126200,142900,83000,210000,369200,181500,142500,55500,65800,83800,58800,139300,216600,121300,258200,133900,177700,345400,222700,125700,500000,500001,94500,85700,113100,156700,214000,261100,164100,197900,145000,271400,141100,195500,262500,80600,234600,255300,207400,500001,182000,76900,500001,241600,102800,181100,335700,432400,253800,137500,197000,58000,120200,119200,378300,143800,147600,72700,120000,134800,456500,184200,79900,173400,352800,500001,166800,262500,150000,54000,220100,330000,461300,176700,291100,59200,73800,75500,184400,162000,240900,204200,117000,300000,226900,220100,263900,137500,193800,50700,42500,212500,52900,194800,101300,87400,245300,244400,256300,141700,198400,161500,250700,136400,153000,105800,121500,137500,174000,146100,164900,57600,149100,165100,209900,204500,101600,75800,202800,376200,110000,65000,90800,111500,86600,149300,245400,112500,159800,303700,218300,344500,273600,351200,122700,180400,493200,101000,426400,182900,255600,329700,72000,302500,411800,290200,104300,155400,159300,444000,221300,123400,220800,500001,78300,58200,68700,387500,68200,242600,183300,142100,241900,94100,96000,261000,236500,287500,173300,68500,96900,57400,500001,275900,500001,338600,54600,166300,47500,155500,98800,112500,162500,183500,340400,225200,158000,137500,184200,241400,140300,481300,171300,168900,172700,500001,212000,460100,115000,82300,160600,96500,169100,148400,175200,500001,69900,314900,286400,475000,60700,236200,60700,213100,150000,200400,334900,269200,56500,413500,121900,177500,176200,125000,225000,385400,500001,182700,90400,92900,358600,157000,267100,180500,136600,374200,132600,500001,203700,149300,159000,207700,279900,139200,146200,366700,211000,58600,159800,293200,500001,213800,209800,355200,75800,112700,112500,235600,139700,106200,409900,74500,238200,122400,500001,164300,244500,265900,230600],"capped":[0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0],"ls":{"a":53101.089563593036,"b":3874.046248606799},"lad":{"a":26501.727642276404,"b":4183.604336043361}};   // x: income in thousands of dollars, y: home value in dollars, capped: 1 if value is at the cap
+const N = D.x.length;
+const START = { a: 200000, b: 0 };
+const state = { a: START.a, b: START.b, mode: 'sq', moved: false, revealed: false };
+
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const money = v => (v < 0 ? '-$' : '$') + Math.round(Math.abs(v)).toLocaleString('en-US');
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+function score(a, b, mode) {
+  let s = 0;
+  for (let i = 0; i < N; i++) { const r = D.y[i] - (a + b * D.x[i]); s += mode === 'abs' ? Math.abs(r) : r * r; }
+  return mode === 'abs' ? s / N : Math.sqrt(s / N);
+}
+const best = () => state.mode === 'abs' ? D.lad : D.ls;
+
+const X0 = 0, X1 = 160, Y0 = 0, Y1 = 520000;
+let W = 0, H = 0;
+const PAD = { l: 78, r: 14, t: 12, b: 46 };
+const px = x => PAD.l + (x - X0) / (X1 - X0) * (W - PAD.l - PAD.r);
+const py = y => H - PAD.b - (y - Y0) / (Y1 - Y0) * (H - PAD.t - PAD.b);
+
+function layout() {
+  const dpr = window.devicePixelRatio || 1;
+  W = cv.clientWidth; H = Math.round(Math.min(430, Math.max(300, W * 0.72)));
+  cv.style.height = H + 'px'; cv.width = W * dpr; cv.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function lineY(a, b, x) { return a + b * x; }
+
+function draw() {
+  const text2 = css('--text2'), text3 = css('--text3'), grid = css('--border'), purple = css('--purple'), amber = css('--amber'), teal = css('--teal'), text = css('--text');
+  ctx.clearRect(0, 0, W, H);
+  ctx.font = '11px -apple-system, "Segoe UI", sans-serif';
+  // grid and ticks
+  ctx.lineWidth = 1;
+  for (let v = 0; v <= 500000; v += 100000) {
+    const y = py(v); ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(W - PAD.r, y); ctx.stroke();
+    ctx.fillStyle = text3; ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillText('$' + v.toLocaleString('en-US'), PAD.l - 8, y);
+  }
+  for (let v = 0; v <= 150; v += 30) {
+    const x = px(v); ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(x, PAD.t); ctx.lineTo(x, H - PAD.b); ctx.stroke();
+    ctx.fillStyle = text3; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(String(v), x, H - PAD.b + 6);
+  }
+  ctx.fillStyle = text2; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  ctx.fillText('Median household income (thousands of dollars)', PAD.l + (W - PAD.l - PAD.r) / 2, H - 4);
+  ctx.save(); ctx.translate(12, PAD.t + (H - PAD.t - PAD.b) / 2); ctx.rotate(-Math.PI / 2); ctx.textBaseline = 'middle';
+  ctx.fillText('Median home value (dollars)', 0, 0); ctx.restore();
+
+  // residuals
+  ctx.lineWidth = 1; ctx.strokeStyle = purple; ctx.globalAlpha = 0.28;
+  ctx.beginPath();
+  for (let i = 0; i < N; i++) { const x = px(D.x[i]); ctx.moveTo(x, py(D.y[i])); ctx.lineTo(x, py(lineY(state.a, state.b, D.x[i]))); }
+  ctx.stroke(); ctx.globalAlpha = 1;
+
+  // points
+  for (let i = 0; i < N; i++) {
+    ctx.beginPath(); ctx.arc(px(D.x[i]), py(D.y[i]), 3.2, 0, Math.PI * 2);
+    ctx.fillStyle = D.capped[i] ? amber : purple; ctx.globalAlpha = 0.75; ctx.fill(); ctx.globalAlpha = 1;
+  }
+
+  // lines
+  function drawLine(a, b, color, dash, width) {
+    ctx.save(); ctx.beginPath(); ctx.rect(PAD.l, PAD.t, W - PAD.l - PAD.r, H - PAD.t - PAD.b); ctx.clip();
+    ctx.strokeStyle = color; ctx.lineWidth = width; ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(px(X0), py(lineY(a, b, X0))); ctx.lineTo(px(X1), py(lineY(a, b, X1))); ctx.stroke(); ctx.restore();
+  }
+  if (state.revealed) { const L = best(); drawLine(L.a, L.b, teal, [7, 5], 2.2); }
+  drawLine(state.a, state.b, text, [], 2.6);
+}
+
+function update() {
+  document.getElementById('vA').textContent = money(state.a);
+  document.getElementById('vB').textContent = money(state.b) + ' per $1,000';
+  const mine = score(state.a, state.b, state.mode);
+  document.getElementById('rdLab').textContent = state.mode === 'sq' ? 'Error, with big misses counted extra' : 'Error, with every dollar of miss counted the same';
+  document.getElementById('rdVal').textContent = money(mine);
+  document.getElementById('rdNote').textContent = state.mode === 'sq'
+    ? 'A typical miss, but a few far-away dots raise it a lot.' : 'The average distance between a dot and the line.';
+  const btn = document.getElementById('btnReveal');
+  btn.disabled = !state.moved;
+  btn.textContent = state.mode === 'sq' ? 'Show the least squares line' : 'Show the least absolute error line';
+  document.getElementById('revealHint').style.display = state.moved ? 'none' : 'block';
+  const rv = document.getElementById('reveal');
+  document.getElementById('lg-best').style.display = state.revealed ? '' : 'none';
+  if (state.revealed) {
+    const L = best(), bs = score(L.a, L.b, state.mode);
+    rv.style.display = 'block';
+    rv.innerHTML = 'Best line for this kind of error: <b>' + money(bs) + '</b><br>Your line: <b>' + money(mine) + '</b>'
+      + '<br>The best line starts at <b>' + money(L.a) + '</b> and rises <b>' + money(L.b) + '</b> per $1,000 of income.';
+  } else rv.style.display = 'none';
+  draw();
+}
+
+function touched() { state.moved = true; update(); }
+document.getElementById('sA').addEventListener('input', e => { state.a = +e.target.value; touched(); });
+document.getElementById('sB').addEventListener('input', e => { state.b = +e.target.value; touched(); });
+document.querySelectorAll('#seg button').forEach(b => b.addEventListener('click', () => {
+  state.mode = b.dataset.mode;
+  document.querySelectorAll('#seg button').forEach(x => x.classList.toggle('on', x === b)); update();
+}));
+document.getElementById('btnReveal').addEventListener('click', () => { state.revealed = true; update(); });
+document.getElementById('btnReset').addEventListener('click', () => {
+  state.a = START.a; state.b = START.b; state.moved = false; state.revealed = false;
+  document.getElementById('sA').value = state.a; document.getElementById('sB').value = state.b; update();
+});
+
+document.getElementById('sA').value = state.a; document.getElementById('sB').value = state.b;
+function init() { layout(); update(); }
+window.addEventListener('resize', init);
+new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
+init();
+</script>
+<script>
+/* Talks to the book page that embeds this widget (see includes/explorer-embed.html). */
+(function () {
+  function sendHeight() {
+    var h = Math.ceil(document.documentElement.getBoundingClientRect().height);
+    parent.postMessage({ type: 'explorer-height', height: h }, '*');
+  }
+  window.addEventListener('message', function (e) {
+    if (e.data && e.data.type === 'explorer-theme') {
+      document.documentElement.setAttribute('data-theme', e.data.dark ? 'dark' : 'light');
+    }
+  });
+  if (window.ResizeObserver) new ResizeObserver(sendHeight).observe(document.body);
+  window.addEventListener('load', function () { sendHeight(); parent.postMessage({ type: 'explorer-ready' }, '*'); });
+})();
+
+</script>
+</body>
+</html>

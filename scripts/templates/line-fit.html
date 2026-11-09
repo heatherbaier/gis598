@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fit a line explorer</title>
+<style>
+/*__BASE_CSS__*/
+  .grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+  .ctl { margin-bottom: 14px; }
+  .ctl label { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .ctl label span.val { font-weight: 500; color: var(--purple); font-variant-numeric: tabular-nums; }
+  .ctl .hint { font-size: 11.5px; color: var(--text3); margin-bottom: 4px; }
+  .seg { display: flex; border: 1px solid var(--border2); border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
+  .seg button { flex: 1; padding: 7px 8px; font-size: 12.5px; border: none; background: var(--surface2); color: var(--text2); cursor: pointer; font-family: inherit; }
+  .seg button.on { background: var(--purple); color: #fff; font-weight: 600; }
+  .readout { background: var(--surface2); border-radius: 9px; padding: 10px 12px; margin-bottom: 12px; }
+  .readout .big { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.15; }
+  .readout .lab { font-size: 12px; color: var(--text2); }
+  .reveal { border: 1px dashed var(--purple-bd); background: var(--purple-bg); color: var(--purple-txt); border-radius: 9px; padding: 9px 12px; font-size: 12.5px; margin-top: 12px; display: none; }
+  .reveal b { font-variant-numeric: tabular-nums; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="grid">
+    <div>
+      <canvas id="cv" height="380"></canvas>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--purple)"></span>block group</span>
+        <span><span class="sw" style="background:var(--amber)"></span>value capped in the census data ($500,000)</span>
+        <span><span class="sw" style="background:transparent;border:2px solid var(--text);width:14px;height:0;border-radius:0;vertical-align:3px"></span>your line</span>
+        <span id="lg-best" style="display:none"><span class="sw" style="background:transparent;border-top:2px dashed var(--teal);width:14px;height:0;border-radius:0;vertical-align:3px"></span>best line</span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ctl">
+        <label>Intercept <span class="val" id="vA"></span></label>
+        <div class="hint">The line's height where income is zero.</div>
+        <input type="range" id="sA" min="-100000" max="300000" step="1000">
+      </div>
+      <div class="ctl">
+        <label>Slope <span class="val" id="vB"></span></label>
+        <div class="hint">How much the line rises for each extra $1,000 of income.</div>
+        <input type="range" id="sB" min="0" max="10000" step="50">
+      </div>
+      <div class="panel-title" style="margin-bottom:4px">How to measure the error</div>
+      <div class="seg" id="seg">
+        <button data-mode="sq" class="on">Squared error</button>
+        <button data-mode="abs">Absolute error</button>
+      </div>
+      <div class="readout">
+        <div class="lab" id="rdLab"></div>
+        <div class="big" id="rdVal"></div>
+        <div class="note" id="rdNote" style="margin-top:3px"></div>
+      </div>
+      <div class="row">
+        <button class="btn primary" id="btnReveal" disabled>Show the least squares line</button>
+        <button class="btn" id="btnReset">Reset</button>
+      </div>
+      <div class="note" id="revealHint" style="margin-top:6px">Move the line first. The button unlocks once you have.</div>
+      <div class="reveal" id="reveal"></div>
+    </div>
+  </div>
+</div>
+<script>
+const D = /*__DATA__*/null;   // x: income in thousands of dollars, y: home value in dollars, capped: 1 if value is at the cap
+const N = D.x.length;
+const START = { a: 200000, b: 0 };
+const state = { a: START.a, b: START.b, mode: 'sq', moved: false, revealed: false };
+
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const money = v => (v < 0 ? '-$' : '$') + Math.round(Math.abs(v)).toLocaleString('en-US');
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+function score(a, b, mode) {
+  let s = 0;
+  for (let i = 0; i < N; i++) { const r = D.y[i] - (a + b * D.x[i]); s += mode === 'abs' ? Math.abs(r) : r * r; }
+  return mode === 'abs' ? s / N : Math.sqrt(s / N);
+}
+const best = () => state.mode === 'abs' ? D.lad : D.ls;
+
+const X0 = 0, X1 = 160, Y0 = 0, Y1 = 520000;
+let W = 0, H = 0;
+const PAD = { l: 78, r: 14, t: 12, b: 46 };
+const px = x => PAD.l + (x - X0) / (X1 - X0) * (W - PAD.l - PAD.r);
+const py = y => H - PAD.b - (y - Y0) / (Y1 - Y0) * (H - PAD.t - PAD.b);
+
+function layout() {
+  const dpr = window.devicePixelRatio || 1;
+  W = cv.clientWidth; H = Math.round(Math.min(430, Math.max(300, W * 0.72)));
+  cv.style.height = H + 'px'; cv.width = W * dpr; cv.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function lineY(a, b, x) { return a + b * x; }
+
+function draw() {
+  const text2 = css('--text2'), text3 = css('--text3'), grid = css('--border'), purple = css('--purple'), amber = css('--amber'), teal = css('--teal'), text = css('--text');
+  ctx.clearRect(0, 0, W, H);
+  ctx.font = '11px -apple-system, "Segoe UI", sans-serif';
+  // grid and ticks
+  ctx.lineWidth = 1;
+  for (let v = 0; v <= 500000; v += 100000) {
+    const y = py(v); ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(W - PAD.r, y); ctx.stroke();
+    ctx.fillStyle = text3; ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillText('$' + v.toLocaleString('en-US'), PAD.l - 8, y);
+  }
+  for (let v = 0; v <= 150; v += 30) {
+    const x = px(v); ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(x, PAD.t); ctx.lineTo(x, H - PAD.b); ctx.stroke();
+    ctx.fillStyle = text3; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(String(v), x, H - PAD.b + 6);
+  }
+  ctx.fillStyle = text2; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  ctx.fillText('Median household income (thousands of dollars)', PAD.l + (W - PAD.l - PAD.r) / 2, H - 4);
+  ctx.save(); ctx.translate(12, PAD.t + (H - PAD.t - PAD.b) / 2); ctx.rotate(-Math.PI / 2); ctx.textBaseline = 'middle';
+  ctx.fillText('Median home value (dollars)', 0, 0); ctx.restore();
+
+  // residuals
+  ctx.lineWidth = 1; ctx.strokeStyle = purple; ctx.globalAlpha = 0.28;
+  ctx.beginPath();
+  for (let i = 0; i < N; i++) { const x = px(D.x[i]); ctx.moveTo(x, py(D.y[i])); ctx.lineTo(x, py(lineY(state.a, state.b, D.x[i]))); }
+  ctx.stroke(); ctx.globalAlpha = 1;
+
+  // points
+  for (let i = 0; i < N; i++) {
+    ctx.beginPath(); ctx.arc(px(D.x[i]), py(D.y[i]), 3.2, 0, Math.PI * 2);
+    ctx.fillStyle = D.capped[i] ? amber : purple; ctx.globalAlpha = 0.75; ctx.fill(); ctx.globalAlpha = 1;
+  }
+
+  // lines
+  function drawLine(a, b, color, dash, width) {
+    ctx.save(); ctx.beginPath(); ctx.rect(PAD.l, PAD.t, W - PAD.l - PAD.r, H - PAD.t - PAD.b); ctx.clip();
+    ctx.strokeStyle = color; ctx.lineWidth = width; ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(px(X0), py(lineY(a, b, X0))); ctx.lineTo(px(X1), py(lineY(a, b, X1))); ctx.stroke(); ctx.restore();
+  }
+  if (state.revealed) { const L = best(); drawLine(L.a, L.b, teal, [7, 5], 2.2); }
+  drawLine(state.a, state.b, text, [], 2.6);
+}
+
+function update() {
+  document.getElementById('vA').textContent = money(state.a);
+  document.getElementById('vB').textContent = money(state.b) + ' per $1,000';
+  const mine = score(state.a, state.b, state.mode);
+  document.getElementById('rdLab').textContent = state.mode === 'sq' ? 'Error, with big misses counted extra' : 'Error, with every dollar of miss counted the same';
+  document.getElementById('rdVal').textContent = money(mine);
+  document.getElementById('rdNote').textContent = state.mode === 'sq'
+    ? 'A typical miss, but a few far-away dots raise it a lot.' : 'The average distance between a dot and the line.';
+  const btn = document.getElementById('btnReveal');
+  btn.disabled = !state.moved;
+  btn.textContent = state.mode === 'sq' ? 'Show the least squares line' : 'Show the least absolute error line';
+  document.getElementById('revealHint').style.display = state.moved ? 'none' : 'block';
+  const rv = document.getElementById('reveal');
+  document.getElementById('lg-best').style.display = state.revealed ? '' : 'none';
+  if (state.revealed) {
+    const L = best(), bs = score(L.a, L.b, state.mode);
+    rv.style.display = 'block';
+    rv.innerHTML = 'Best line for this kind of error: <b>' + money(bs) + '</b><br>Your line: <b>' + money(mine) + '</b>'
+      + '<br>The best line starts at <b>' + money(L.a) + '</b> and rises <b>' + money(L.b) + '</b> per $1,000 of income.';
+  } else rv.style.display = 'none';
+  draw();
+}
+
+function touched() { state.moved = true; update(); }
+document.getElementById('sA').addEventListener('input', e => { state.a = +e.target.value; touched(); });
+document.getElementById('sB').addEventListener('input', e => { state.b = +e.target.value; touched(); });
+document.querySelectorAll('#seg button').forEach(b => b.addEventListener('click', () => {
+  state.mode = b.dataset.mode;
+  document.querySelectorAll('#seg button').forEach(x => x.classList.toggle('on', x === b)); update();
+}));
+document.getElementById('btnReveal').addEventListener('click', () => { state.revealed = true; update(); });
+document.getElementById('btnReset').addEventListener('click', () => {
+  state.a = START.a; state.b = START.b; state.moved = false; state.revealed = false;
+  document.getElementById('sA').value = state.a; document.getElementById('sB').value = state.b; update();
+});
+
+document.getElementById('sA').value = state.a; document.getElementById('sB').value = state.b;
+function init() { layout(); update(); }
+window.addEventListener('resize', init);
+new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
+init();
+</script>
+<script>
+/*__BRIDGE__*/
+</script>
+</body>
+</html>

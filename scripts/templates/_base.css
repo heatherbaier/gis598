@@ -1,0 +1,40 @@
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f8f8f6; --surface: #ffffff; --surface2: #f2f1ed;
+    --border: rgba(0,0,0,0.10); --border2: rgba(0,0,0,0.18);
+    --text: #1a1a1e; --text2: #5a5a62; --text3: #9a9a9f;
+    --blue: #185fa5; --teal: #0f6e56; --amber: #ba7517; --red: #a32d2d; --purple: #534ab7;
+    --purple-bg: #eeedfe; --purple-bd: #afa9ec; --purple-txt: #26215c;
+    --radius: 10px; --radius-lg: 14px;
+  }
+  :root[data-theme="dark"] {
+    --bg: #16161a; --surface: #1e1e24; --surface2: #26262e;
+    --border: rgba(255,255,255,0.10); --border2: rgba(255,255,255,0.18);
+    --text: #e8e8ec; --text2: #9a9aa4; --text3: #6a6a74;
+    --blue: #6fb0ee; --teal: #4cc2a0; --amber: #e3a44a; --red: #f08a8a; --purple: #9a93f0;
+    --purple-bg: #1a1840; --purple-bd: #534ab7; --purple-txt: #cecbf6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #16161a; --surface: #1e1e24; --surface2: #26262e;
+      --border: rgba(255,255,255,0.10); --border2: rgba(255,255,255,0.18);
+      --text: #e8e8ec; --text2: #9a9aa4; --text3: #6a6a74;
+      --blue: #6fb0ee; --teal: #4cc2a0; --amber: #e3a44a; --red: #f08a8a; --purple: #9a93f0;
+      --purple-bg: #1a1840; --purple-bd: #534ab7; --purple-txt: #cecbf6;
+    }
+  }
+  html { overflow: hidden; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.55; }
+  .wrap { padding: 1rem; }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.1rem; }
+  .panel-title { font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--text3); margin-bottom: 8px; }
+  .btn { padding: 7px 14px; font-size: 13px; border-radius: 7px; cursor: pointer; border: 1px solid var(--border2); background: var(--surface2); color: var(--text); font-family: inherit; }
+  .btn:hover { background: var(--border); }
+  .btn.primary { background: var(--purple); color: #fff; border-color: var(--purple); }
+  .btn.primary:hover { opacity: .9; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  input[type=range] { width: 100%; accent-color: var(--purple); }
+  canvas { display: block; width: 100%; border-radius: 8px; background: var(--surface2); }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--text2); margin-top: 8px; }
+  .legend span.sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+  .note { font-size: 11.5px; color: var(--text3); line-height: 1.5; }

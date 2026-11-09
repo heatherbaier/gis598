@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Decision threshold explorer</title>
+<style>
+/*__BASE_CSS__*/
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+  .thr { background: var(--surface2); border-radius: 10px; padding: 10px 14px 12px; margin-bottom: 12px; }
+  .thr .top { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .thr .top span { font-size: 22px; color: var(--purple); font-variant-numeric: tabular-nums; }
+  .thr .ends { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); margin-top: 2px; }
+  table.cm { width: 100%; border-collapse: separate; border-spacing: 4px; font-size: 12px; margin-bottom: 4px; }
+  table.cm th { font-weight: 500; color: var(--text2); font-size: 11.5px; padding: 2px 4px; text-align: center; }
+  table.cm th.rowh { text-align: right; width: 24%; }
+  table.cm td { border-radius: 8px; padding: 8px 6px; text-align: center; }
+  table.cm td .n { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  table.cm td .t { font-size: 10.5px; opacity: .85; }
+  .tp { background: color-mix(in srgb, var(--teal) 20%, var(--surface)); color: var(--text); border: 1px solid var(--teal); }
+  .tn { background: var(--surface2); border: 1px solid var(--border2); }
+  .fp { background: color-mix(in srgb, var(--amber) 22%, var(--surface)); border: 1px solid var(--amber); }
+  .fn { background: color-mix(in srgb, var(--red) 20%, var(--surface)); border: 1px solid var(--red); }
+  .metric { margin-bottom: 9px; }
+  .metric .m1 { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; }
+  .metric .m1 span { font-variant-numeric: tabular-nums; color: var(--purple); }
+  .bar { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; margin: 3px 0 2px; }
+  .bar > div { height: 100%; background: var(--purple); border-radius: 3px; }
+  .metric .def { font-size: 11.5px; color: var(--text3); line-height: 1.4; }
+  label.chk { display: flex; gap: 7px; align-items: center; font-size: 12.5px; color: var(--text2); margin-top: 8px; cursor: pointer; }
+  .legend .sw { width: 10px; height: 10px; }
+  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="grid">
+    <div>
+      <div class="panel-title">Validation block groups</div>
+      <canvas id="cv" height="420"></canvas>
+      <div class="legend" id="lg"></div>
+      <label class="chk"><input type="checkbox" id="onlyErr"> Show only the mistakes</label>
+    </div>
+    <div>
+      <div class="thr">
+        <div class="top">Decision threshold <span id="tv"></span></div>
+        <input type="range" id="sl" min="5" max="95" step="1" value="50">
+        <div class="ends"><span>0.05: flag almost everything</span><span>0.95: flag very little</span></div>
+      </div>
+      <div class="note" style="margin-bottom:6px">Positive means a block group is <b>below</b> the statewide median home value (<span id="medv"></span>). A block group is flagged when the model's probability is at or above the threshold.</div>
+      <table class="cm">
+        <tr><th></th><th>Flagged<br>(below median)</th><th>Not flagged<br>(above median)</th></tr>
+        <tr><th class="rowh">Actually below the median</th><td class="tp"><div class="n" id="tpN"></div><div class="t">true positive</div></td><td class="fn"><div class="n" id="fnN"></div><div class="t">false negative</div></td></tr>
+        <tr><th class="rowh">Actually above the median</th><td class="fp"><div class="n" id="fpN"></div><div class="t">false positive</div></td><td class="tn"><div class="n" id="tnN"></div><div class="t">true negative</div></td></tr>
+      </table>
+      <div style="height:8px"></div>
+      <div class="metric"><div class="m1">Accuracy <span id="mAcc"></span></div><div class="bar"><div id="bAcc"></div></div><div class="def">The share of all predictions that are right.</div></div>
+      <div class="metric"><div class="m1">Precision <span id="mPre"></span></div><div class="bar"><div id="bPre"></div></div><div class="def">Of the block groups flagged, the share that really are below the median.</div></div>
+      <div class="metric"><div class="m1">Recall <span id="mRec"></span></div><div class="bar"><div id="bRec"></div></div><div class="def">Of the block groups that really are below the median, the share that were flagged.</div></div>
+    </div>
+  </div>
+</div>
+<script>
+const D = /*__DATA__*/null;   // lon, lat (hundredths of a degree), p (probability below median, thousandths), y (1 = actually below median)
+const N = D.lon.length;
+document.getElementById('medv').textContent = '$' + D.median.toLocaleString('en-US');
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const state = { t: 0.5, onlyErr: false };
+const LON0 = Math.min(...D.lon) / 100 - 0.2, LON1 = Math.max(...D.lon) / 100 + 0.2;
+const LAT0 = Math.min(...D.lat) / 100 - 0.2, LAT1 = Math.max(...D.lat) / 100 + 0.2;
+const K = Math.cos(37.3 * Math.PI / 180);
+let W = 0, H = 0, S = 1, OX = 0, OY = 0;
+
+function layout() {
+  const dpr = window.devicePixelRatio || 1;
+  W = cv.clientWidth;
+  const spanX = (LON1 - LON0) * K, spanY = LAT1 - LAT0;
+  H = Math.round(Math.min(520, W * spanY / spanX)); S = Math.min(W / spanX, H / spanY);
+  OX = (W - spanX * S) / 2; OY = (H - spanY * S) / 2;
+  cv.style.height = H + 'px'; cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+const X = i => OX + (D.lon[i] / 100 - LON0) * K * S;
+const Y = i => H - OY - (D.lat[i] / 100 - LAT0) * S;
+
+function outcome(i) {
+  const flagged = D.p[i] / 1000 >= state.t, actual = D.y[i] === 1;
+  return flagged ? (actual ? 'tp' : 'fp') : (actual ? 'fn' : 'tn');
+}
+
+function render() {
+  const col = { tp: css('--teal'), fp: css('--amber'), fn: css('--red'), tn: css('--text3') };
+  const counts = { tp: 0, fp: 0, fn: 0, tn: 0 };
+  const out = new Array(N);
+  for (let i = 0; i < N; i++) { out[i] = outcome(i); counts[out[i]]++; }
+  ctx.clearRect(0, 0, W, H);
+  // correct predictions first, mistakes on top
+  const order = ['tn', 'tp', 'fp', 'fn'];
+  for (const k of order) {
+    const isErr = k === 'fp' || k === 'fn';
+    if (state.onlyErr && !isErr) continue;
+    ctx.fillStyle = col[k]; ctx.globalAlpha = isErr ? 0.9 : (state.onlyErr ? 0 : 0.5);
+    for (let i = 0; i < N; i++) if (out[i] === k) { ctx.beginPath(); ctx.arc(X(i), Y(i), isErr ? 2.3 : 1.8, 0, 6.2832); ctx.fill(); }
+  }
+  ctx.globalAlpha = 1;
+
+  const { tp, fp, fn, tn } = counts, pct = v => (100 * v).toFixed(1) + '%';
+  const acc = (tp + tn) / N, pre = tp + fp ? tp / (tp + fp) : 0, rec = tp / (tp + fn);
+  document.getElementById('tv').textContent = state.t.toFixed(2);
+  [['tpN', tp], ['fnN', fn], ['fpN', fp], ['tnN', tn]].forEach(([id, v]) => document.getElementById(id).textContent = v.toLocaleString('en-US'));
+  [['Acc', acc], ['Pre', pre], ['Rec', rec]].forEach(([k, v]) => { document.getElementById('m' + k).textContent = pct(v); document.getElementById('b' + k).style.width = (100 * v) + '%'; });
+  document.getElementById('lg').innerHTML =
+    '<span><span class="sw" style="background:' + col.tp + '"></span>true positive (' + tp.toLocaleString('en-US') + ')</span>'
+    + '<span><span class="sw" style="background:' + col.fp + '"></span>false positive (' + fp.toLocaleString('en-US') + ')</span>'
+    + '<span><span class="sw" style="background:' + col.fn + '"></span>false negative (' + fn.toLocaleString('en-US') + ')</span>'
+    + '<span><span class="sw" style="background:' + col.tn + '"></span>true negative (' + tn.toLocaleString('en-US') + ')</span>';
+}
+
+document.getElementById('sl').addEventListener('input', e => { state.t = +e.target.value / 100; render(); });
+document.getElementById('onlyErr').addEventListener('change', e => { state.onlyErr = e.target.checked; render(); });
+function init() { layout(); render(); }
+window.addEventListener('resize', init);
+new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+init();
+</script>
+<script>
+/*__BRIDGE__*/
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+# Written by scripts/build_housing_assets.py. Use in a chapter as {{< var housing.mean_mae >}}.
+housing:
+  n_rows: "20,640"
+  n_capped: "992"
+  mean_mae: "$92,000"
+  loc_mae: "$36,000"
+  k1_train_mae: "$10,000"
+  k1_val_mae: "$40,000"
+  best_k: "5"
+  best_val_mae: "$35,000"
