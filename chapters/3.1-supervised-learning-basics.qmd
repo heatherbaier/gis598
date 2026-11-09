@@ -1,0 +1,55 @@
+---
+title: "3.1 Supervised learning basics"
+---
+
+<!--
+  PLACEHOLDER. Drafted from the course outline and the Spring 2027 daily syllabus (Feb 3 session).
+  Outline description: "covers regression and classification, baselines, loss, and over and underfitting
+  with scikit-learn." Replace the italic notes with text as each section is written.
+-->
+
+Supervised learning means learning a rule that predicts a known outcome from labeled examples. This chapter introduces the two basic kinds of problem, regression and classification, and the ideas that every later chapter in this part depends on: baselines, loss, and the balance between underfitting and overfitting. The running example for the tabular chapters is California housing prices.
+
+::: {.callout-note title="Learning objectives"}
+By the end of this chapter you should be able to
+
+- tell a regression problem from a classification problem and give a geographic example of each
+- explain why every model should be compared with a simple baseline
+- describe what a loss function measures and why training tries to make it small
+- recognize overfitting and underfitting from the gap between training and test performance
+- train and evaluate a simple model with scikit-learn
+:::
+
+## Regression and classification
+
+*To be written. What it means to predict a number versus a category, with California housing prices as the regression example and a categorical outcome built from the same data as the classification example.*
+
+## Baselines
+
+*To be written. Why a model's score means little until it is compared with a simple baseline, such as predicting the average.*
+
+## Loss
+
+*To be written. How a loss function turns "how wrong is this prediction" into a single number that training can reduce.*
+
+## Overfitting and underfitting
+
+*To be written. A model that is too simple misses real patterns, and a model that is too flexible learns the quirks of its training data. Show both in scikit-learn.*
+
+::: {.callout-tip title="Try it"}
+<!-- Draft prompt based on the syllabus activity "Over and underfitting in scikit-learn". -->
+Fit models of increasing complexity to the housing data and compare their error on the training data with their error on held-out data. At what point does a more complex model stop helping?
+:::
+
+::: {.callout-note title="Frontier"}
+To be written.
+:::
+
+::: {.callout-warning title="What could go wrong"}
+<!-- Outline theme for this part: inflated accuracy from spatial leakage. -->
+To be written.
+:::
+
+## Summary
+
+*To be written.*

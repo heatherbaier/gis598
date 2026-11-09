@@ -1,0 +1,60 @@
+---
+title: "3.4 Spatial cross-validation in practice"
+---
+
+<!--
+  PLACEHOLDER. Drafted from the course outline and the Spring 2027 daily syllabus (Feb 15 session).
+  Outline description: "the first time students see how much a spatial split changes their reported
+  accuracy." This chapter comes after students have a random forest to evaluate. Replace the italic notes
+  with text as each section is written.
+-->
+
+When a model is tested on examples that sit right next to its training examples, it is being tested on a problem it has already half seen. Nearby places tend to be similar, so a random split of spatial data can make a model look far better than it will be when it is used somewhere new. This chapter is where you measure how much that matters, by evaluating your own random forest in two ways and comparing the results.
+
+::: {.callout-note title="Learning objectives"}
+By the end of this chapter you should be able to
+
+- run random and spatial cross-validation on the same model
+- explain why the two give different accuracy, and which one better matches how the model will be used
+- map a model's residuals and describe any spatial pattern in its errors
+- decide when spatial cross-validation is the right evaluation for a project
+:::
+
+## Random cross-validation and what it assumes
+
+*To be written. What cross-validation does, and the assumption that the examples are independent, which spatial data usually breaks.*
+
+## Spatial cross-validation
+
+*To be written. Splitting by location, for example into spatial blocks, so that the test data are separated from the training data.*
+
+## Comparing the two
+
+*To be written. Evaluate the random forest from the previous chapter both ways and compare the reported accuracy.*
+
+## Mapping the residuals
+
+*To be written. Plot the errors on a map and look for clusters of over- and under-prediction.*
+
+## Choosing an evaluation
+
+*To be written. When spatial cross-validation is the right choice, and when a random split is still reasonable.*
+
+::: {.callout-tip title="Try it"}
+<!-- Draft prompt based on the syllabus activity for this session. -->
+Run random and spatial cross-validation on your random forest, map the residuals, and describe in a few sentences what the two evaluations tell you about how the model would perform in a place it has never seen.
+:::
+
+::: {.callout-note title="Frontier"}
+<!-- Outline theme for this part: models that handle spatial heterogeneity directly. -->
+Some models are built to handle differences from place to place directly, from geographically weighted regression to spatially adaptive neural networks. To be written.
+:::
+
+::: {.callout-warning title="What could go wrong"}
+<!-- Outline theme for this part: inflated accuracy from spatial leakage. -->
+To be written.
+:::
+
+## Summary
+
+*To be written.*
